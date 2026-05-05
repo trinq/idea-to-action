@@ -21,20 +21,20 @@ AI Personal Productivity Agent
 Current phase:
 
 ```text
-First agent implemented. Core workflow taking shape.
+Core pipeline complete with eval suite. Ready for prompt tuning and real LLM testing.
 ```
 
 Current status:
 
 ```text
-F001, F002, F003, F011, F004, F013, F005 implemented and passing.
-Input → Organizer → Structured Output pipeline complete (with mock LLM).
+F001-F008, F011, F013 implemented and passing (10/13 features).
+Full pipeline + eval suite all green.
 ```
 
 Highest-priority unfinished feature:
 
 ```text
-F006 - Action plan generator
+F009 - Trace logging
 ```
 
 Standard startup command:
@@ -79,6 +79,155 @@ Not created yet:
 - `scripts/` (populated)
 
 ## Session Record
+
+### Session 011 - F008 Implementation
+
+Goal:
+
+```text
+Implement F008 - Initial eval suite with 12 cases and pass/fail reporting.
+```
+
+Completed:
+
+```text
+Created evals/scoring.py: 12 check functions for organizer/planner/tool outputs.
+Created evals/runner.py: load_eval_cases, run_all_evals, print_report.
+Created evals/initial_cases.json: 12 eval cases covering organizer, planner, tool safety.
+Created scripts/run_evals.py: CLI entry point.
+Created tests/test_evals.py: 26 tests for eval infrastructure.
+```
+
+Verification run:
+
+```text
+init.sh passed. 203/203 tests passing. 12/12 evals passing.
+```
+
+Evidence recorded:
+
+```text
+Eval areas: idea_organization (6 cases), action_planning (3 cases), tool_safety (3 cases).
+Checks: categories, actionable/vague separation, missing context, confidence range,
+original text preservation, no invented deadlines, approval_required, pending status.
+All 12 evals pass. Eval script returns exit 0.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — evals test schema rules, not LLM quality.
+Real LLM eval tuning needs API key (can be done after F013 is live-tested).
+```
+
+Next best action:
+
+```text
+Start F009 - Trace logging.
+```
+
+### Session 010 - F007 Implementation
+
+Goal:
+
+```text
+Implement F007 - Draft-only tool action layer with fake tools.
+```
+
+Completed:
+
+```text
+Created tools/fake_task_manager.py: draft_create_task() + execute() with approval check.
+Created tools/fake_calendar.py: draft_create_event() + execute() with approval check.
+Created tools/registry.py: ToolRegistry mapping action types to fake tools.
+Created graph/nodes/tool_draft_generator.py: PlanResult → ActionPlan.
+All write actions approval_required=True, start pending.
+Fake execute() only works when approved; blocked otherwise.
+No external APIs are called — all fake.
+16 tests in tests/test_tool_draft_layer.py.
+```
+
+Verification run:
+
+```text
+init.sh passed. 177/177 tests passing (161 previous + 16 new).
+```
+
+Evidence recorded:
+
+```text
+FakeTaskManager/FakeCalendar draft actions with correct action_type.
+All write actions have approval_required=True, approval_status=pending.
+Unapproved execute() raises PermissionError.
+Registry routes correctly; unknown action types raise ValueError.
+ToolDraftGenerator converts PlanResult → ActionPlan with 100% pending actions.
+Empty plan rejected at schema level.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — fake tools tested without real APIs.
+SEND_EMAIL and SEND_MESSAGE not yet implemented (out of MVP scope).
+```
+
+Next best action:
+
+```text
+Start F008 - Initial eval suite.
+```
+
+### Session 009 - F006 Implementation
+
+Goal:
+
+```text
+Implement F006 - Action plan generator agent.
+```
+
+Completed:
+
+```text
+Created schemas/plan.py: PlanResult schema (tasks, calendar_events, missing_context).
+Created agent/planner.py: generate_plan() with structured LLM output.
+Added PLANNER_SYSTEM_PROMPT and PLANNER_USER_TEMPLATE to prompts.py.
+Post-validation: invented deadlines removed when no evidence in original text.
+Only actionable items become tasks; vague items skipped.
+11 tests in tests/test_planner.py with mock LLM.
+```
+
+Verification run:
+
+```text
+init.sh passed. 161/161 tests passing (150 previous + 11 new).
+```
+
+Evidence recorded:
+
+```text
+generate_plan() accepts OrganizedIdeaOutput, returns PlanResult.
+Actionable ideas → concrete tasks with priority and effort.
+Vague items skipped — no tasks generated for non-actionable ideas.
+Invented deadlines stripped when original text lacks date keywords.
+Legitimate deadlines preserved when evidence exists.
+No calendar events generated without meeting evidence.
+Missing context reported by LLM.
+Priorities follow evidence (HIGH for urgent, MEDIUM default).
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — tested with mock LLM only.
+Planner prompt needs eval tuning (F008).
+Post-validation rules are heuristic; evals will measure precision.
+```
+
+Next best action:
+
+```text
+Start F007 - Draft-only tool action layer.
+```
 
 ### Session 008 - F005 Implementation
 
@@ -474,27 +623,25 @@ Start F003 - Task and tool-action schema.
 Feature:
 
 ```text
-F006 - Action plan generator
+F009 - Trace logging
 ```
 
 Expected work:
 
 ```text
-Build the Action Plan Generator agent.
-Turns organized ideas into practical action plans with task breakdown and next steps.
-Tasks must be concrete and actionable.
-Priorities must follow F004 rules.
-No unsupported deadlines invented.
-Uses structured LLM output.
-Tests with mock LLM.
+Implement trace logging that records inputs, model outputs, tool draft actions,
+approvals, and errors for debugging.
+Run one example and confirm trace file is created.
+Confirm trace avoids secrets (no API keys).
+Confirm tool action decisions are logged.
+Add trace tests.
 ```
 
-Definition of done for F006:
+Definition of done for F009:
 
 ```text
-Action plan generated from organized ideas.
-Tasks are concrete and actionable.
-Priorities follow rules.
-No invented deadlines.
+Trace file created after running pipeline.
+Trace avoids secrets.
+Tool action decisions logged.
 Verification result is recorded here and in feature_list.json.
 ```

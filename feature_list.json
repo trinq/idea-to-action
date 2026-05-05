@@ -176,15 +176,21 @@
       "area": "agent",
       "title": "Action plan generator",
       "user_visible_behavior": "The system turns organized ideas into a practical action plan with task breakdown and next steps.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Generate action plan from organized ideas.",
         "Confirm tasks are concrete and actionable.",
         "Confirm priorities follow rules.",
         "Confirm no unsupported deadlines are invented."
       ],
-      "evidence": [],
-      "notes": "Planning should use structured data from F002 and F003."
+      "evidence": [
+        "11/11 tests passing in tests/test_planner.py",
+        "PlanResult schema: tasks, calendar_events, missing_context",
+        "generate_plan() uses with_structured_output(PlanResult)",
+        "Post-validation strips invented deadlines, preserves legitimate ones",
+        "Vague items skipped; only actionable ideas become tasks"
+      ],
+      "notes": "F006 complete. Planner generates tasks + calendar drafts with evidence-based validation."
     },
     {
       "id": "F007",
@@ -192,15 +198,21 @@
       "area": "tools",
       "title": "Draft-only tool action layer",
       "user_visible_behavior": "The system prepares draft tool actions for calendar, task manager, notes, or reminders without executing them.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Prepare draft task action.",
         "Prepare draft calendar action.",
         "Confirm all write actions are approval_required.",
         "Confirm no external tool is called."
       ],
-      "evidence": [],
-      "notes": "Use fake tools only at this stage."
+      "evidence": [
+        "16/16 tests passing in tests/test_tool_draft_layer.py",
+        "FakeTaskManagerTool + FakeCalendarTool: draft + execute (approval-gated)",
+        "ToolRegistry maps action types to fake tools",
+        "ToolDraftGenerator: PlanResult → ActionPlan, 100% pending/approval_required",
+        "Unapproved execute() blocked with PermissionError"
+      ],
+      "notes": "F007 complete. Fake tools only. All write actions approval-gated at draft and execute level."
     },
     {
       "id": "F008",
@@ -208,15 +220,21 @@
       "area": "eval",
       "title": "Initial eval suite",
       "user_visible_behavior": "The system can run test cases for idea organization, action planning, and tool-action safety.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Create at least 10 eval cases.",
         "Run eval suite.",
         "Report pass/fail per case.",
         "Record failures and next fixes."
       ],
-      "evidence": [],
-      "notes": "Do not tune prompts seriously before eval exists."
+      "evidence": [
+        "12 eval cases in evals/initial_cases.json (organizer, planner, tool safety)",
+        "12 check functions in evals/scoring.py",
+        "scripts/run_evals.py: 12/12 evals pass, exit 0",
+        "26 tests in tests/test_evals.py",
+        "Areas: idea_organization (6), action_planning (3), tool_safety (3)"
+      ],
+      "notes": "F008 complete. Eval suite ready for prompt tuning once real LLM is connected."
     },
     {
       "id": "F009",
