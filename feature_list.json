@@ -132,15 +132,21 @@
       "area": "config",
       "title": "LLM provider configuration",
       "user_visible_behavior": "The system supports configurable LLM providers with API key management, model selection, and graceful fallback on failure.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Configure a supported LLM provider.",
         "Confirm API key is loaded from environment, not stored in repo.",
         "Confirm graceful error when API key is missing or invalid.",
         "Confirm model selection is configurable."
       ],
-      "evidence": [],
-      "notes": "Support at least OpenAI and Anthropic. API keys via env vars only."
+      "evidence": [
+        "24/24 tests passing in tests/test_llm_provider.py",
+        "Supports DeepSeek (primary) and OpenAI (alternative) via langchain-openai",
+        "API keys from env only; LLMConfigError on missing/empty key",
+        "Model configurable via DEEPSEEK_MODEL / OPENAI_MODEL env vars",
+        "API key excluded from str/repr output"
+      ],
+      "notes": "F013 complete. Provider-agnostic; switch provider by changing env vars."
     },
     {
       "id": "F005",
@@ -148,15 +154,21 @@
       "area": "agent",
       "title": "Single idea organizer agent",
       "user_visible_behavior": "The system converts rough notes into organized categories and identifies actionable versus vague items.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Run sample messy note input.",
         "Confirm ideas are categorized.",
         "Confirm vague items are not forced into tasks.",
         "Confirm missing context is reported."
       ],
-      "evidence": [],
-      "notes": "Keep this single-agent first. No multi-agent architecture yet."
+      "evidence": [
+        "10/10 tests passing in tests/test_organizer.py",
+        "organize_ideas() uses with_structured_output(OrganizedIdeaOutput)",
+        "Prompt enforces: preserve text, mark inferred, report missing context, never invent",
+        "Vague items not forced actionable; original text preserved verbatim",
+        "Error handling wraps LLM failures in OrganizerError"
+      ],
+      "notes": "F005 complete. Tested with mock LLM. Live testing needs DEEPSEEK_API_KEY."
     },
     {
       "id": "F006",

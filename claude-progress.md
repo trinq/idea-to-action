@@ -21,19 +21,20 @@ AI Personal Productivity Agent
 Current phase:
 
 ```text
-Core schemas, storage, and rules implemented
+First agent implemented. Core workflow taking shape.
 ```
 
 Current status:
 
 ```text
-F001, F002, F003, F011, F004 implemented and passing. All core infrastructure ready.
+F001, F002, F003, F011, F004, F013, F005 implemented and passing.
+Input → Organizer → Structured Output pipeline complete (with mock LLM).
 ```
 
 Highest-priority unfinished feature:
 
 ```text
-F013 - LLM provider configuration
+F006 - Action plan generator
 ```
 
 Standard startup command:
@@ -78,6 +79,109 @@ Not created yet:
 - `scripts/` (populated)
 
 ## Session Record
+
+### Session 008 - F005 Implementation
+
+Goal:
+
+```text
+Implement F005 - Single idea organizer agent.
+```
+
+Completed:
+
+```text
+Created agent/organizer.py: organize_ideas() with structured LLM output.
+Created agent/prompts.py: ORGANIZER_SYSTEM_PROMPT and ORGANIZER_USER_TEMPLATE.
+Uses with_structured_output(OrganizedIdeaOutput) for schema-validated output.
+Error handling wraps LLM failures in OrganizerError.
+Prompt templates enforce: preserve original text, mark inferred, report missing context, never invent.
+10 tests in tests/test_organizer.py with mock LLM.
+```
+
+Verification run:
+
+```text
+init.sh passed. 150/150 tests passing (140 previous + 10 new).
+```
+
+Evidence recorded:
+
+```text
+organize_ideas() accepts RawIdeaInput, returns OrganizedIdeaOutput.
+Vague items correctly classified as non-actionable.
+Missing context reported for incomplete notes.
+Original text preserved verbatim.
+Multiple categories handled correctly.
+inferred_fields populated appropriately.
+Prompt templates include all required rules.
+LLM errors wrapped gracefully.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — tested with mock LLM only.
+No live LLM end-to-end test yet.
+Prompt tuning not done — needs eval suite (F008).
+```
+
+Next best action:
+
+```text
+Start F006 - Action plan generator.
+```
+
+### Session 007 - F013 Implementation
+
+Goal:
+
+```text
+Implement F013 - Configurable LLM provider layer.
+```
+
+Completed:
+
+```text
+Created agent/llm_provider.py with provider-agnostic factory.
+Supports DeepSeek (primary) and OpenAI (alternative).
+Both via langchain-openai ChatOpenAI (DeepSeek is OpenAI-compatible).
+API keys from environment only (DEEPSEEK_API_KEY, OPENAI_API_KEY).
+Graceful LLMConfigError on missing/invalid keys.
+Configurable model selection via env vars.
+get_default_provider() auto-detects available provider.
+24 tests in tests/test_llm_provider.py.
+```
+
+Verification run:
+
+```text
+init.sh passed. 140/140 tests passing.
+```
+
+Evidence recorded:
+
+```text
+API keys loaded from env only, never hardcoded or read from files.
+create_llm() returns ChatOpenAI with correct model, base_url, temperature.
+Missing key raises LLMConfigError with clear message.
+Model defaults: deepseek-chat / gpt-4o-mini, overridable via env.
+API key excluded from str/repr output.
+Provider priority: DeepSeek first, then OpenAI fallback.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set in current environment.
+No actual API call is made in tests — provider is validated structurally.
+```
+
+Next best action:
+
+```text
+Start F005 - Single idea organizer agent.
+```
 
 ### Session 006 - F004 Implementation
 
@@ -370,27 +474,27 @@ Start F003 - Task and tool-action schema.
 Feature:
 
 ```text
-F013 - LLM provider configuration
+F006 - Action plan generator
 ```
 
 Expected work:
 
 ```text
-Implement configurable LLM provider layer with API key management,
-model selection, and graceful fallback on failure.
-Support DeepSeek (primary) and OpenAI (alternative).
-API keys loaded from environment only, never stored in repo.
-Graceful error when API key missing or invalid.
-Model selection configurable.
-Add provider tests.
+Build the Action Plan Generator agent.
+Turns organized ideas into practical action plans with task breakdown and next steps.
+Tasks must be concrete and actionable.
+Priorities must follow F004 rules.
+No unsupported deadlines invented.
+Uses structured LLM output.
+Tests with mock LLM.
 ```
 
-Definition of done for F013:
+Definition of done for F006:
 
 ```text
-LLM provider configurable via environment variables.
-API key loaded from environment.
-Graceful error on missing/invalid key.
-Model selection works.
+Action plan generated from organized ideas.
+Tasks are concrete and actionable.
+Priorities follow rules.
+No invented deadlines.
 Verification result is recorded here and in feature_list.json.
 ```
