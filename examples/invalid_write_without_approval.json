@@ -1,0 +1,9 @@
+{
+  "action_type": "create_calendar_event",
+  "action_data": {
+    "title": "Lunch meeting",
+    "date": "2026-05-06"
+  },
+  "approval_required": false,
+  "approval_status": "pending"
+}

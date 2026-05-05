@@ -1,0 +1,63 @@
+{
+  "cleaned_summary": "Cần chuẩn bị slide cho buổi presentation thứ 6, có cuộc họp sync team lúc 2h, và đang có ý tưởng thêm demo live.",
+  "ideas": [
+    {
+      "original_text": "Cần chuẩn bị slide cho buổi presentation thứ 6",
+      "cleaned_text": "Chuẩn bị slide cho buổi presentation thứ 6",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    },
+    {
+      "original_text": "Gặp team lúc 2h để sync lại progress",
+      "cleaned_text": "Họp sync progress với team lúc 2h",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    },
+    {
+      "original_text": "ý tưởng: thêm demo live thay vì screenshot",
+      "cleaned_text": "Thêm demo live thay vì screenshot trong presentation",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    }
+  ],
+  "categories": ["work"],
+  "actionable_items": [
+    {
+      "original_text": "Cần chuẩn bị slide cho buổi presentation thứ 6",
+      "cleaned_text": "Chuẩn bị slide cho buổi presentation thứ 6",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    },
+    {
+      "original_text": "Gặp team lúc 2h để sync lại progress",
+      "cleaned_text": "Họp sync progress với team lúc 2h",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    },
+    {
+      "original_text": "ý tưởng: thêm demo live thay vì screenshot",
+      "cleaned_text": "Thêm demo live thay vì screenshot trong presentation",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    }
+  ],
+  "vague_items": [],
+  "missing_context": [
+    {
+      "question": "Buổi presentation thứ 6 diễn ra lúc mấy giờ?",
+      "related_to": "Chuẩn bị slide cho buổi presentation thứ 6"
+    },
+    {
+      "question": "Cần bao nhiêu slide? Có template sẵn không?",
+      "related_to": "Chuẩn bị slide cho buổi presentation thứ 6"
+    }
+  ],
+  "confidence": 0.9,
+  "inferred_fields": ["confidence"]
+}

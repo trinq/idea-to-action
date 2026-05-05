@@ -46,15 +46,20 @@
       "area": "schema",
       "title": "Organized idea output schema",
       "user_visible_behavior": "The system returns cleaned summary, categories, actionable items, missing context, and confidence fields.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Validate a sample organized output.",
         "Reject output missing categories.",
         "Reject output missing missing_context field.",
         "Confirm user facts and inferred fields are separated."
       ],
-      "evidence": [],
-      "notes": "Output must be machine-validated before prompt tuning."
+      "evidence": [
+        "22/22 tests passing in tests/test_ideas_schema.py",
+        "Schema: OrganizedIdea, MissingContext, OrganizedIdeaOutput",
+        "Valid sample: examples/valid_organized_output.json",
+        "Invalid sample: examples/invalid_no_categories.json"
+      ],
+      "notes": "F002 complete. User facts separated from inferred fields via is_inferred and inferred_fields."
     },
     {
       "id": "F003",
@@ -62,15 +67,21 @@
       "area": "schema",
       "title": "Task and tool-action schema",
       "user_visible_behavior": "The system can represent draft tasks, reminders, calendar drafts, and approval-required tool actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Validate sample task object.",
         "Validate sample calendar draft object.",
         "Validate approval_required flag.",
         "Reject write actions without approval status."
       ],
-      "evidence": [],
-      "notes": "This protects the system from unsafe tool execution."
+      "evidence": [
+        "32/32 tests passing (test_task_schema.py + test_tool_permissions.py)",
+        "Schemas: DraftTask, DraftCalendarEvent, DraftReminder, ToolAction, ActionPlan",
+        "Write actions (create_*, send_*) rejected without approval_required=True",
+        "Valid samples: valid_draft_task.json, valid_calendar_draft.json, valid_action_plan.json",
+        "Invalid sample: invalid_write_without_approval.json"
+      ],
+      "notes": "F003 complete. All write actions are approval-gated at the schema level."
     },
     {
       "id": "F011",
@@ -78,15 +89,20 @@
       "area": "storage",
       "title": "Storage layer",
       "user_visible_behavior": "The system persists organized ideas, action plans, and draft tool actions locally so users can retrieve and review past results.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Save an organized idea result to local storage.",
         "Retrieve a previously saved result.",
         "Confirm data integrity after save and load cycle.",
         "Reject corrupted or tampered storage files."
       ],
-      "evidence": [],
-      "notes": "Start with local JSON or SQLite. No cloud storage in MVP."
+      "evidence": [
+        "15/15 tests passing in tests/test_storage.py",
+        "StorageManager: JSONL backend with SHA-256 checksum",
+        "Atomic writes via tmp file + os.replace",
+        "IntegrityError on checksum mismatch or corrupted JSON"
+      ],
+      "notes": "F011 complete. Local JSONL storage with integrity verification ready."
     },
     {
       "id": "F004",
@@ -94,15 +110,21 @@
       "area": "rules",
       "title": "Priority and effort rules",
       "user_visible_behavior": "The system assigns priority and effort only when evidence supports the assignment.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Explicit deadline produces high priority.",
         "Vague someday item produces low priority.",
         "Missing deadline is reported as missing context.",
         "Suggested dates are marked as inferred."
       ],
-      "evidence": [],
-      "notes": "Do not invent urgency."
+      "evidence": [
+        "28/28 tests passing in tests/test_priority_rules.py",
+        "assign_priority(): deadline/urgency HIGH, someday LOW, default MEDIUM",
+        "estimate_effort(): small/large keyword detection, default MEDIUM",
+        "All results marked is_inferred appropriately",
+        "Missing context reported for uncertain deadlines"
+      ],
+      "notes": "F004 complete. Keyword-based rules are heuristic; evals will measure precision later."
     },
     {
       "id": "F013",

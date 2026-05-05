@@ -1,0 +1,22 @@
+[
+  {
+    "action_type": "create_task",
+    "action_data": {
+      "title": "Chuẩn bị slide presentation thứ 6",
+      "priority": "high",
+      "effort": "large"
+    },
+    "approval_required": true,
+    "approval_status": "pending"
+  },
+  {
+    "action_type": "create_calendar_event",
+    "action_data": {
+      "title": "Sync progress với team",
+      "date": "2026-05-05",
+      "time": "14:00"
+    },
+    "approval_required": true,
+    "approval_status": "pending"
+  }
+]

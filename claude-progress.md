@@ -21,19 +21,19 @@ AI Personal Productivity Agent
 Current phase:
 
 ```text
-Schema implementation
+Core schemas, storage, and rules implemented
 ```
 
 Current status:
 
 ```text
-Project scaffolding complete. F001 (Raw idea input schema) implemented and passing.
+F001, F002, F003, F011, F004 implemented and passing. All core infrastructure ready.
 ```
 
 Highest-priority unfinished feature:
 
 ```text
-F002 - Organized idea output schema
+F013 - LLM provider configuration
 ```
 
 Standard startup command:
@@ -78,6 +78,196 @@ Not created yet:
 - `scripts/` (populated)
 
 ## Session Record
+
+### Session 006 - F004 Implementation
+
+Goal:
+
+```text
+Implement F004 - Deterministic priority and effort rules.
+```
+
+Completed:
+
+```text
+Created rules/priority.py: assign_priority() with explicit deadline patterns,
+vague/someday patterns, urgency keywords (Vietnamese + English).
+Created rules/effort.py: estimate_effort() with small/large keyword detection.
+All rules are pure Python, no LLM.
+Missing context reported when deadline is uncertain.
+All estimates marked is_inferred unless explicitly stated by user.
+28 tests in tests/test_priority_rules.py.
+```
+
+Verification run:
+
+```text
+init.sh passed. 116/116 tests passing.
+```
+
+Evidence recorded:
+
+```text
+Explicit deadline → HIGH (not inferred).
+Vague someday → LOW (not inferred).
+Default actionable → MEDIUM (inferred).
+Non-actionable → LOW (not inferred).
+Small effort keywords → SMALL (inferred).
+Large effort keywords → LARGE (inferred).
+Default → MEDIUM (inferred).
+Missing context detected for uncertain deadlines.
+No urgency invented.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set. LLM features will not work.
+Keyword-based rules are heuristic — evals will measure precision later.
+```
+
+Next best action:
+
+```text
+Start F013 - LLM provider configuration.
+```
+
+### Session 005 - F011 Implementation
+
+Goal:
+
+```text
+Implement F011 - Local JSONL storage layer with checksum integrity verification.
+```
+
+Completed:
+
+```text
+Created StorageManager with JSONL backend (storage/manager.py).
+save/load/list/delete/exists operations for any record type.
+SHA-256 checksum per record, verified on load and list_all.
+Atomic writes via tmp file + os.replace.
+Corrupted JSON and tampered data rejected with clear errors.
+15 tests in tests/test_storage.py.
+```
+
+Verification run:
+
+```text
+init.sh passed. 88/88 tests passing (14+22+32+5 F001-F003 + 15 F011).
+```
+
+Evidence recorded:
+
+```text
+All tests pass. Save/load round-trip preserves data integrity.
+Tampered files detected via checksum mismatch.
+Corrupted JSON raises StorageError.
+Atomic writes prevent partial file corruption.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set.
+```
+
+Next best action:
+
+```text
+Start F004 - Priority and effort rules.
+```
+
+### Session 004 - F003 Implementation
+
+Goal:
+
+```text
+Implement F003 - Task and tool-action schema with approval enforcement.
+```
+
+Completed:
+
+```text
+Created DraftTask, DraftCalendarEvent, DraftReminder schemas (tasks.py).
+Created ToolAction, ActionPlan schemas with approval_required enforcement (tool_actions.py).
+Write actions (create_*, send_*) MUST have approval_required=True.
+All actions start with approval_status=pending.
+Valid samples: valid_draft_task.json, valid_calendar_draft.json, valid_action_plan.json.
+Invalid sample: invalid_write_without_approval.json.
+Added 32 tests (10 task schema + 22 tool permissions).
+```
+
+Verification run:
+
+```text
+init.sh passed. 68/68 tests passing (14 F001 + 22 F002 + 32 F003).
+No deprecation warnings.
+```
+
+Evidence recorded:
+
+```text
+All tests pass. Write actions rejected without approval_required=True.
+approval_status transitions: pending → approved/rejected.
+approved_at only settable when status is approved.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set.
+```
+
+Next best action:
+
+```text
+Start F011 - Storage layer.
+```
+
+### Session 003 - F002 Implementation
+
+Goal:
+
+```text
+Implement F002 - Organized idea output schema with user fact vs inference separation.
+```
+
+Completed:
+
+```text
+Created OrganizedIdea, MissingContext, and OrganizedIdeaOutput schemas.
+Separates user facts (original_text, explicit categories) from inferred fields.
+Added valid sample: examples/valid_organized_output.json.
+Added invalid sample: examples/invalid_no_categories.json.
+Added 22 tests in tests/test_ideas_schema.py.
+```
+
+Verification run:
+
+```text
+init.sh passed. 36/36 tests passing (14 F001 + 22 F002).
+```
+
+Evidence recorded:
+
+```text
+All tests pass. Output schema validates correctly. Categories required.
+Missing context field required (can be empty). User facts and inferred fields separated.
+Confidence bounded 0.0-1.0.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set.
+```
+
+Next best action:
+
+```text
+Start F003 - Task and tool-action schema.
+```
 
 ### Session 002 - Project Scaffolding + F001 Implementation
 
@@ -165,7 +355,6 @@ Known risks:
 
 ```text
 - DEEPSEEK_API_KEY not set. LLM features will not work.
-- No git repository initialized yet.
 - No eval suite exists yet.
 - No runnable example script exists yet.
 ```
@@ -173,7 +362,7 @@ Known risks:
 Next best action:
 
 ```text
-Start F002 - Organized idea output schema.
+Start F003 - Task and tool-action schema.
 ```
 
 ## Next Implementation Target
@@ -181,29 +370,27 @@ Start F002 - Organized idea output schema.
 Feature:
 
 ```text
-F002 - Organized idea output schema
+F013 - LLM provider configuration
 ```
 
 Expected work:
 
 ```text
-Create the output schema for organized ideas.
-Must include cleaned summary, categories, actionable items, priority, effort estimate,
-missing context, and draft tool actions.
-Must separate user facts from model-inferred fields.
-Validate a sample organized output.
-Reject output missing categories.
-Reject output missing missing_context field.
-Confirm user facts and inferred fields are separated.
-Add schema validation tests.
+Implement configurable LLM provider layer with API key management,
+model selection, and graceful fallback on failure.
+Support DeepSeek (primary) and OpenAI (alternative).
+API keys loaded from environment only, never stored in repo.
+Graceful error when API key missing or invalid.
+Model selection configurable.
+Add provider tests.
 ```
 
-Definition of done for F002:
+Definition of done for F013:
 
 ```text
-Output schema exists.
-Valid sample passes validation.
-Invalid sample fails validation.
-User facts and inferred fields are separated.
+LLM provider configurable via environment variables.
+API key loaded from environment.
+Graceful error on missing/invalid key.
+Model selection works.
 Verification result is recorded here and in feature_list.json.
 ```

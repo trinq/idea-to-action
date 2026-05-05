@@ -1,0 +1,18 @@
+{
+  "cleaned_summary": "Some ideas.",
+  "ideas": [
+    {
+      "original_text": "Need to finish the report.",
+      "cleaned_text": "Finish the report.",
+      "category": "work",
+      "is_actionable": true,
+      "is_inferred": false
+    }
+  ],
+  "categories": [],
+  "actionable_items": [],
+  "vague_items": [],
+  "missing_context": [],
+  "confidence": 0.8,
+  "inferred_fields": ["confidence"]
+}
