@@ -1,0 +1,236 @@
+{
+  "project": "idea-to-action",
+  "description": "AI Personal Productivity Agent that organizes rough ideas, generates action plans, and prepares approval-gated tool actions.",
+  "rules": {
+    "one_feature_in_progress_at_a_time": true,
+    "allowed_status_values": [
+      "not_started",
+      "in_progress",
+      "blocked",
+      "passing"
+    ],
+    "definition_of_done": [
+      "target behavior implemented",
+      "verification ran",
+      "schemas pass",
+      "tests or evals pass, or regression is documented",
+      "evidence recorded",
+      "approval requirements preserved"
+    ]
+  },
+  "features": [
+    {
+      "id": "F001",
+      "priority": 1,
+      "area": "schema",
+      "title": "Raw idea input schema",
+      "user_visible_behavior": "The system accepts raw user notes, bullet points, reminders, and task dumps as structured input.",
+      "status": "passing",
+      "verification": [
+        "Create valid sample raw idea input.",
+        "Validate accepted input formats.",
+        "Reject empty or malformed input.",
+        "Confirm original user text is preserved."
+      ],
+      "evidence": [
+        "14/14 tests passing in tests/test_input_schema.py",
+        "Schema: RawIdeaInput (raw_text, input_type, source, created_at)",
+        "Valid sample: examples/valid_raw_idea.json",
+        "Invalid sample: examples/invalid_empty_input.json"
+      ],
+      "notes": "F001 complete. Schema is frozen, validated, and tested."
+    },
+    {
+      "id": "F002",
+      "priority": 2,
+      "area": "schema",
+      "title": "Organized idea output schema",
+      "user_visible_behavior": "The system returns cleaned summary, categories, actionable items, missing context, and confidence fields.",
+      "status": "not_started",
+      "verification": [
+        "Validate a sample organized output.",
+        "Reject output missing categories.",
+        "Reject output missing missing_context field.",
+        "Confirm user facts and inferred fields are separated."
+      ],
+      "evidence": [],
+      "notes": "Output must be machine-validated before prompt tuning."
+    },
+    {
+      "id": "F003",
+      "priority": 3,
+      "area": "schema",
+      "title": "Task and tool-action schema",
+      "user_visible_behavior": "The system can represent draft tasks, reminders, calendar drafts, and approval-required tool actions.",
+      "status": "not_started",
+      "verification": [
+        "Validate sample task object.",
+        "Validate sample calendar draft object.",
+        "Validate approval_required flag.",
+        "Reject write actions without approval status."
+      ],
+      "evidence": [],
+      "notes": "This protects the system from unsafe tool execution."
+    },
+    {
+      "id": "F011",
+      "priority": 4,
+      "area": "storage",
+      "title": "Storage layer",
+      "user_visible_behavior": "The system persists organized ideas, action plans, and draft tool actions locally so users can retrieve and review past results.",
+      "status": "not_started",
+      "verification": [
+        "Save an organized idea result to local storage.",
+        "Retrieve a previously saved result.",
+        "Confirm data integrity after save and load cycle.",
+        "Reject corrupted or tampered storage files."
+      ],
+      "evidence": [],
+      "notes": "Start with local JSON or SQLite. No cloud storage in MVP."
+    },
+    {
+      "id": "F004",
+      "priority": 5,
+      "area": "rules",
+      "title": "Priority and effort rules",
+      "user_visible_behavior": "The system assigns priority and effort only when evidence supports the assignment.",
+      "status": "not_started",
+      "verification": [
+        "Explicit deadline produces high priority.",
+        "Vague someday item produces low priority.",
+        "Missing deadline is reported as missing context.",
+        "Suggested dates are marked as inferred."
+      ],
+      "evidence": [],
+      "notes": "Do not invent urgency."
+    },
+    {
+      "id": "F013",
+      "priority": 6,
+      "area": "config",
+      "title": "LLM provider configuration",
+      "user_visible_behavior": "The system supports configurable LLM providers with API key management, model selection, and graceful fallback on failure.",
+      "status": "not_started",
+      "verification": [
+        "Configure a supported LLM provider.",
+        "Confirm API key is loaded from environment, not stored in repo.",
+        "Confirm graceful error when API key is missing or invalid.",
+        "Confirm model selection is configurable."
+      ],
+      "evidence": [],
+      "notes": "Support at least OpenAI and Anthropic. API keys via env vars only."
+    },
+    {
+      "id": "F005",
+      "priority": 7,
+      "area": "agent",
+      "title": "Single idea organizer agent",
+      "user_visible_behavior": "The system converts rough notes into organized categories and identifies actionable versus vague items.",
+      "status": "not_started",
+      "verification": [
+        "Run sample messy note input.",
+        "Confirm ideas are categorized.",
+        "Confirm vague items are not forced into tasks.",
+        "Confirm missing context is reported."
+      ],
+      "evidence": [],
+      "notes": "Keep this single-agent first. No multi-agent architecture yet."
+    },
+    {
+      "id": "F006",
+      "priority": 8,
+      "area": "agent",
+      "title": "Action plan generator",
+      "user_visible_behavior": "The system turns organized ideas into a practical action plan with task breakdown and next steps.",
+      "status": "not_started",
+      "verification": [
+        "Generate action plan from organized ideas.",
+        "Confirm tasks are concrete and actionable.",
+        "Confirm priorities follow rules.",
+        "Confirm no unsupported deadlines are invented."
+      ],
+      "evidence": [],
+      "notes": "Planning should use structured data from F002 and F003."
+    },
+    {
+      "id": "F007",
+      "priority": 9,
+      "area": "tools",
+      "title": "Draft-only tool action layer",
+      "user_visible_behavior": "The system prepares draft tool actions for calendar, task manager, notes, or reminders without executing them.",
+      "status": "not_started",
+      "verification": [
+        "Prepare draft task action.",
+        "Prepare draft calendar action.",
+        "Confirm all write actions are approval_required.",
+        "Confirm no external tool is called."
+      ],
+      "evidence": [],
+      "notes": "Use fake tools only at this stage."
+    },
+    {
+      "id": "F008",
+      "priority": 10,
+      "area": "eval",
+      "title": "Initial eval suite",
+      "user_visible_behavior": "The system can run test cases for idea organization, action planning, and tool-action safety.",
+      "status": "not_started",
+      "verification": [
+        "Create at least 10 eval cases.",
+        "Run eval suite.",
+        "Report pass/fail per case.",
+        "Record failures and next fixes."
+      ],
+      "evidence": [],
+      "notes": "Do not tune prompts seriously before eval exists."
+    },
+    {
+      "id": "F009",
+      "priority": 11,
+      "area": "tracing",
+      "title": "Trace logging",
+      "user_visible_behavior": "The system records inputs, model outputs, tool draft actions, approvals, and errors for debugging.",
+      "status": "not_started",
+      "verification": [
+        "Run one example.",
+        "Confirm trace file is created.",
+        "Confirm trace avoids secrets.",
+        "Confirm tool action decisions are logged."
+      ],
+      "evidence": [],
+      "notes": "Trace must not expose private user data unnecessarily."
+    },
+    {
+      "id": "F012",
+      "priority": 12,
+      "area": "api",
+      "title": "API and CLI interface",
+      "user_visible_behavior": "The system exposes a REST API and CLI interface for submitting notes, retrieving organized ideas, and reviewing draft actions.",
+      "status": "not_started",
+      "verification": [
+        "Submit notes via CLI and receive organized output.",
+        "Submit notes via REST API and receive JSON response.",
+        "Confirm API validates input schema.",
+        "Confirm API returns proper error responses."
+      ],
+      "evidence": [],
+      "notes": "API layer sits between agent logic and UI. Build before UI."
+    },
+    {
+      "id": "F010",
+      "priority": 13,
+      "area": "ui",
+      "title": "Simple local UI",
+      "user_visible_behavior": "The user can paste rough notes and receive organized ideas, action plan, and draft actions.",
+      "status": "not_started",
+      "verification": [
+        "Open local UI.",
+        "Submit sample notes.",
+        "View structured output.",
+        "Confirm no action executes without approval."
+      ],
+      "evidence": [],
+      "notes": "UI comes after schemas, agent, fake tools, and evals."
+    }
+  ]
+}
