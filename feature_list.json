@@ -336,7 +336,7 @@
       "area": "integration",
       "title": "Notion task manager integration",
       "user_visible_behavior": "The system creates real tasks in a Notion database from approved draft task actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Authenticate with Notion API via integration token.",
         "Create a task page in a configured Notion database from an approved draft.",
@@ -344,8 +344,17 @@
         "Confirm task properties match the draft (title, priority, effort, due date).",
         "Handle API errors gracefully (auth invalid, database not found, rate limit)."
       ],
-      "evidence": [],
-      "notes": "Requires Notion integration token and database ID. Token via NOTION_API_KEY env var. All writes approval-gated."
+      "evidence": [
+        "25/25 tests passing in tests/test_notion_task_manager.py",
+        "NotionTaskManagerTool: Bearer token auth, approval-gated execute()",
+        "ToolRegistry auto-detects NOTION_API_KEY + NOTION_DATABASE_ID → NotionTaskManagerTool, else FakeTaskManagerTool",
+        "Page properties mapping: Name (title), Priority (select), Effort (select), Due Date (date)",
+        "Description written as page content (paragraph block), graceful fallback on append failure",
+        "Rate limit (429) and unauthorized (401) wrapped with clear error messages",
+        "UI shows Notion connection status and page links",
+        "Error hierarchy: NotionIntegrationError ← NotionAuthError, NotionTaskError"
+      ],
+      "notes": "Requires Notion integration with database. Set NOTION_API_KEY and NOTION_DATABASE_ID env vars. Database must have Name, Priority, Effort, Due Date properties."
     },
     {
       "id": "F016",
