@@ -147,6 +147,11 @@ def _render_tool_actions() -> None:
     else:
         st.caption("Google Calendar: Not configured (using fake tool)")
 
+    if registry.is_notion_task_manager_connected:
+        st.success("Notion: Connected")
+    else:
+        st.caption("Notion: Not configured (using fake tool)")
+
     st.write(f"{len(tool_actions.actions)} action(s) pending approval.")
 
     for idx, action in enumerate(tool_actions.actions):
@@ -195,6 +200,12 @@ def _render_tool_actions() -> None:
                         st.success(
                             f"Event created: [{result_data['event_summary']}]({result_data['html_link']}) "
                             f"(ID: `{result_data['google_event_id']}`)"
+                        )
+                    # Show Notion page link if available
+                    elif result_data.get("notion_page_url"):
+                        st.success(
+                            f"Task created: [{result_data['task_title']}]({result_data['notion_page_url']}) "
+                            f"(ID: `{result_data['notion_page_id']}`)"
                         )
                     else:
                         st.success(f"Execution result: {result_data}")
