@@ -37,6 +37,10 @@ GOOGLE_TOKEN_PATH = os.environ.get(
 )
 TIMEZONE = os.environ.get("I2A_TIMEZONE", "Asia/Ho_Chi_Minh")
 
+# Notion Task Manager
+NOTION_API_KEY = os.environ.get("NOTION_API_KEY", "")
+NOTION_DATABASE_ID = os.environ.get("NOTION_DATABASE_ID", "")
+
 
 def ensure_dirs() -> None:
     """Create required directories if they don't exist."""
