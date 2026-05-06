@@ -28,6 +28,10 @@ api = [
     "uvicorn>=0.32.0",
 ]
 ui = ["streamlit>=1.40.0"]
+google = [
+    "google-auth-oauthlib>=1.0.0",
+    "google-api-python-client>=2.0.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

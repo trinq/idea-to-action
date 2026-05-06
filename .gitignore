@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+data/
+traces/
+reports/
+client_secret.json
+google_token.json
+.env
