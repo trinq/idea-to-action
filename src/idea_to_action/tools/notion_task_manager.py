@@ -131,7 +131,7 @@ class NotionTaskManagerTool:
             "status": "created",
             "notion_page_id": page_id,
             "notion_page_url": page.get("url", ""),
-            "task_title": action.action_data.get("title"),
+            "task_title": action.action_data.get("title") or "Untitled Task",
         }
 
         # Write description as page content (paragraph block)
