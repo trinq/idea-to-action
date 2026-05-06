@@ -27,14 +27,14 @@ Core pipeline complete with eval suite. Ready for prompt tuning and real LLM tes
 Current status:
 
 ```text
-F001-F008, F011, F013 implemented and passing (10/13 features).
-Full pipeline + eval suite all green.
+F001-F009, F011-F013 implemented and passing (12/13 features).
+Full pipeline + eval suite + trace logging + API/CLI all green.
 ```
 
 Highest-priority unfinished feature:
 
 ```text
-F009 - Trace logging
+F010 - Simple local UI
 ```
 
 Standard startup command:
@@ -79,6 +79,114 @@ Not created yet:
 - `scripts/` (populated)
 
 ## Session Record
+
+### Session 013 - F012 Implementation
+
+Goal:
+
+```text
+Implement F012 - API and CLI interface.
+```
+
+Completed:
+
+```text
+Created src/idea_to_action/pipeline.py: run_pipeline() orchestrator wiring
+input → organizer → planner → tool draft → trace.
+PipelineResult and PipelineError dataclasses. Each step wrapped in try/except,
+never throws — always returns partial results.
+Created src/idea_to_action/api/models.py: Pydantic request/response models.
+Created src/idea_to_action/api/app.py: FastAPI create_app() factory with
+/health and /submit endpoints. Graceful error handling: 422 for validation,
+503 for missing LLM.
+Created src/idea_to_action/main.py: CLI with argparse, stdin support,
+--json flag, formatted text output.
+Created tests/test_pipeline.py: 16 pipeline integration tests.
+Created tests/test_api.py: 10 API endpoint tests (TestClient).
+Created tests/test_main.py: 10 CLI integration tests (subprocess).
+```
+
+Verification run:
+
+```text
+init.sh passed. 261/261 tests passing (225 previous + 36 new). 12/12 evals passing.
+```
+
+Evidence recorded:
+
+```text
+run_pipeline() successfully chains all steps: input validation, organizer, planner,
+tool draft generation, trace logging.
+Pipeline never crashes — errors are captured per step and returned in result.errors.
+Trace file always written (try/finally), even on failures.
+API /health returns llm_available status.
+API /submit validates input (422 on empty/missing), returns 503 when no LLM.
+CLI rejects empty/whitespace input at the CLI level.
+CLI --json outputs parseable JSON with full pipeline result.
+CLI reads from stdin when --text not provided.
+Safe dump uses model_dump(mode='json') to avoid datetime serialization issues.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — pipeline always returns partial results.
+Real LLM end-to-end testing needs API key.
+FastAPI server not started/tested with uvicorn — only TestClient tests.
+```
+
+Next best action:
+
+```text
+Start F010 - Simple local UI (last feature).
+```
+
+### Session 012 - F009 Implementation
+
+Goal:
+
+```text
+Implement F009 - Trace logging.
+```
+
+Completed:
+
+```text
+Created src/idea_to_action/tracing/trace_logger.py: TraceLogger with JSONL output.
+_secret_redaction: sensitive keys (api_key, password, token, secret, authorization),
+value patterns (sk-*, Bearer *), nested dicts and lists of dicts.
+Created tests/test_trace_logger.py: 22 tests for sanitize + trace logger + full pipeline.
+```
+
+Verification run:
+
+```text
+init.sh passed. 225/225 tests passing. 12/12 evals passing.
+```
+
+Evidence recorded:
+
+```text
+TraceLogger.log() records step, timestamp, trace_id, sanitized data.
+close() writes JSONL to traces/ directory.
+API keys and Bearer tokens redacted in both keys and values.
+Nested structures (dicts, lists of dicts) sanitized recursively.
+Full pipeline trace: 5 steps (input, organizer, planner, tools, final_output).
+Empty trace creates file without content.
+Step ordering preserved across 10-entry trace.
+```
+
+Known risks:
+
+```text
+DEEPSEEK_API_KEY not set — trace logger tested structurally, not via live pipeline.
+```
+
+Next best action:
+
+```text
+Start F012 - API and CLI interface.
+```
 
 ### Session 011 - F008 Implementation
 
@@ -623,25 +731,24 @@ Start F003 - Task and tool-action schema.
 Feature:
 
 ```text
-F009 - Trace logging
+F010 - Simple local UI
 ```
 
 Expected work:
 
 ```text
-Implement trace logging that records inputs, model outputs, tool draft actions,
-approvals, and errors for debugging.
-Run one example and confirm trace file is created.
-Confirm trace avoids secrets (no API keys).
-Confirm tool action decisions are logged.
-Add trace tests.
+Build a simple local UI (Streamlit or simple web UI) where the user
+can paste rough notes and receive organized ideas, action plan, and
+draft actions. All actions remain approval-gated — no execution
+without explicit user approval.
 ```
 
-Definition of done for F009:
+Definition of done for F010:
 
 ```text
-Trace file created after running pipeline.
-Trace avoids secrets.
-Tool action decisions logged.
+Open local UI.
+Submit sample notes.
+View structured output.
+Confirm no action executes without approval.
 Verification result is recorded here and in feature_list.json.
 ```

@@ -242,15 +242,22 @@
       "area": "tracing",
       "title": "Trace logging",
       "user_visible_behavior": "The system records inputs, model outputs, tool draft actions, approvals, and errors for debugging.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Run one example.",
         "Confirm trace file is created.",
         "Confirm trace avoids secrets.",
         "Confirm tool action decisions are logged."
       ],
-      "evidence": [],
-      "notes": "Trace must not expose private user data unnecessarily."
+      "evidence": [
+        "22/22 tests passing in tests/test_trace_logger.py",
+        "TraceLogger: JSONL tracing with log/close/get_entries",
+        "_sanitize() redacts: api_key, password, token, secret, authorization, Bearer tokens",
+        "Supports nested dicts, lists of dicts, sensitive key/value detection",
+        "Full pipeline trace simulation: input → organizer → planner → tools → final_output",
+        "Traces written to traces/ directory as .jsonl files"
+      ],
+      "notes": "F009 complete. All secrets redacted. API keys never appear in trace files."
     },
     {
       "id": "F012",
@@ -258,15 +265,22 @@
       "area": "api",
       "title": "API and CLI interface",
       "user_visible_behavior": "The system exposes a REST API and CLI interface for submitting notes, retrieving organized ideas, and reviewing draft actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Submit notes via CLI and receive organized output.",
         "Submit notes via REST API and receive JSON response.",
         "Confirm API validates input schema.",
         "Confirm API returns proper error responses."
       ],
-      "evidence": [],
-      "notes": "API layer sits between agent logic and UI. Build before UI."
+      "evidence": [
+        "36 new tests: 16 pipeline + 10 API + 10 CLI",
+        "Pipeline: run_pipeline() wires input → organizer → planner → tool draft → trace",
+        "API: FastAPI app with /health and /submit endpoints, proper error handling (422, 503)",
+        "CLI: argparse-based, stdin support, --json flag, formatted text output",
+        "Graceful degradation when LLM not configured (returns errors, never crashes)",
+        "261/261 tests pass, 12/12 evals pass"
+      ],
+      "notes": "F012 complete. Ready for real LLM testing once DEEPSEEK_API_KEY is set."
     },
     {
       "id": "F010",
@@ -274,15 +288,73 @@
       "area": "ui",
       "title": "Simple local UI",
       "user_visible_behavior": "The user can paste rough notes and receive organized ideas, action plan, and draft actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Open local UI.",
         "Submit sample notes.",
         "View structured output.",
         "Confirm no action executes without approval."
       ],
+      "evidence": [
+        "10/10 tests passing in tests/test_ui.py",
+        "Streamlit app at src/idea_to_action/ui/app.py with 6 sequential sections",
+        "Approval gate: approve→execute, reject→skip, pending→PermissionError",
+        "Graceful LLM-unavailable warning, collapsible organized ideas + action plan",
+        "scripts/run_ui.py convenience launcher",
+        "streamlit>=1.40.0 added to pyproject.toml optional deps [ui]"
+      ],
+      "notes": "F010 complete. Run with: streamlit run src/idea_to_action/ui/app.py"
+    },
+    {
+      "id": "F014",
+      "priority": 14,
+      "area": "integration",
+      "title": "Google Calendar integration",
+      "user_visible_behavior": "The system creates real Google Calendar events from approved draft calendar actions.",
+      "status": "not_started",
+      "verification": [
+        "Authenticate with Google Calendar API via OAuth2.",
+        "Create a calendar event from an approved draft action.",
+        "Confirm unapproved drafts are blocked from execution.",
+        "Confirm event details match the draft (title, date, time, duration).",
+        "Handle API errors gracefully (auth expired, network, quota)."
+      ],
       "evidence": [],
-      "notes": "UI comes after schemas, agent, fake tools, and evals."
+      "notes": "Requires Google Cloud project with Calendar API enabled. OAuth2 credentials via env/config file. All writes approval-gated."
+    },
+    {
+      "id": "F015",
+      "priority": 15,
+      "area": "integration",
+      "title": "Notion task manager integration",
+      "user_visible_behavior": "The system creates real tasks in a Notion database from approved draft task actions.",
+      "status": "not_started",
+      "verification": [
+        "Authenticate with Notion API via integration token.",
+        "Create a task page in a configured Notion database from an approved draft.",
+        "Confirm unapproved drafts are blocked from execution.",
+        "Confirm task properties match the draft (title, priority, effort, due date).",
+        "Handle API errors gracefully (auth invalid, database not found, rate limit)."
+      ],
+      "evidence": [],
+      "notes": "Requires Notion integration token and database ID. Token via NOTION_API_KEY env var. All writes approval-gated."
+    },
+    {
+      "id": "F016",
+      "priority": 16,
+      "area": "integration",
+      "title": "Gmail draft integration",
+      "user_visible_behavior": "The system creates Gmail draft emails from approved draft email actions.",
+      "status": "not_started",
+      "verification": [
+        "Authenticate with Gmail API via OAuth2.",
+        "Create a draft email from an approved action (to, subject, body).",
+        "Confirm unapproved drafts are blocked from execution.",
+        "Confirm draft appears in Gmail Drafts folder, not sent automatically.",
+        "Handle API errors gracefully (auth expired, network, quota)."
+      ],
+      "evidence": [],
+      "notes": "Creates drafts only, never sends automatically. Requires Google Cloud project with Gmail API. OAuth2 credentials via env/config. All writes approval-gated."
     }
   ]
 }

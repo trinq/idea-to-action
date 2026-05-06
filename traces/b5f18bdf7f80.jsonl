@@ -1,0 +1,3 @@
+{"trace_id": "b5f18bdf7f80", "step": "input_received", "timestamp": "2026-05-06T05:05:16.640362+00:00", "data": {"raw_text": "tôi muốn lập kế hoạch về đào tạo trong tháng 5", "input_type": "other", "source": "ui"}}
+{"trace_id": "b5f18bdf7f80", "step": "organizer_error", "timestamp": "2026-05-06T05:05:16.640902+00:00", "data": {"message": "Failed to organize ideas: 'NoneType' object has no attribute 'with_structured_output'", "type": "organizer_error"}}
+{"trace_id": "b5f18bdf7f80", "step": "final_output", "timestamp": "2026-05-06T05:05:16.640918+00:00", "data": {"total_errors": 1, "has_input": true, "has_organized": false, "has_plan": false, "has_tool_actions": false, "total_actions": 0}}

@@ -16,7 +16,7 @@ def make_mock_llm(return_value):
             return return_value
 
     class MockLLM:
-        def with_structured_output(self, schema):
+        def with_structured_output(self, schema, **kwargs):
             return MockStructuredLLM()
 
     return MockLLM()
@@ -314,7 +314,7 @@ class TestGeneratePlan:
 
     def test_llm_error_wrapped(self) -> None:
         class FailingLLM:
-            def with_structured_output(self, schema):
+            def with_structured_output(self, schema, **kwargs):
                 raise RuntimeError("API timeout")
 
         organized = make_organized_output([

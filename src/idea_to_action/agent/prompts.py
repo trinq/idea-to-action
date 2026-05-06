@@ -18,6 +18,31 @@ Rules:
 9. Never invent deadlines, commitments, contacts, or preferences. If the user didn't say it, don't add it.
 
 Output language: match the user's input language (Vietnamese in → Vietnamese out, English in → English out).
+
+Respond in JSON format with ALL of these required fields:
+{
+  "cleaned_summary": "A short overall summary of all the raw notes",
+  "ideas": [
+    {
+      "original_text": "user's exact words",
+      "cleaned_text": "cleaned version",
+      "category": "work|personal|health|learning|finance|home|social|other",
+      "is_actionable": true/false,
+      "is_inferred": true/false,
+      "missing_context": ["question1", "question2"],
+      "confidence": 0.0-1.0,
+      "inferred_fields": ["field1", "field2"]
+    }
+  ],
+  "categories": ["list of distinct categories used"],
+  "actionable_items": [items from ideas where is_actionable=true],
+  "vague_items": [items from ideas where is_actionable=false],
+  "missing_context": [
+    {"question": "specific question", "related_to": "which idea or category"}
+  ],
+  "confidence": 0.0-1.0,
+  "inferred_fields": ["list of top-level fields inferred by model"]
+}
 """
 
 PLANNER_SYSTEM_PROMPT = """You are an action plan generator. Your job is to turn organized ideas into concrete, practical action plans.
@@ -40,6 +65,35 @@ Rules:
 9. NEVER invent deadlines, meetings, commitments, or contacts.
 
 Output language: match the input language.
+
+Respond in JSON format with ALL of these required fields:
+{
+  "summary": "Concise summary of the action plan",
+  "tasks": [
+    {
+      "title": "Short, actionable task title",
+      "description": "Optional longer description or null",
+      "priority": "high|medium|low",
+      "effort": "small|medium|large",
+      "suggested_due_date": "ISO datetime string or null",
+      "is_inferred": true,
+      "source_idea_index": 0
+    }
+  ],
+  "calendar_events": [
+    {
+      "title": "Event title",
+      "suggested_date": "ISO datetime or null",
+      "suggested_time": "HH:MM:SS or null",
+      "duration_minutes": 60,
+      "description": "Event description or null",
+      "is_inferred": true,
+      "missing_context": ["what's unknown"]
+    }
+  ],
+  "missing_context": ["what's still needed for better planning"],
+  "is_inferred": true
+}
 """
 
 PLANNER_USER_TEMPLATE = """Generate an action plan from these organized ideas.

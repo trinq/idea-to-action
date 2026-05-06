@@ -45,7 +45,7 @@ def organize_ideas(
     ]
 
     try:
-        structured_llm = llm.with_structured_output(OrganizedIdeaOutput)
+        structured_llm = llm.with_structured_output(OrganizedIdeaOutput, method="json_mode")
         result = structured_llm.invoke(messages)
     except LLMConfigError:
         raise

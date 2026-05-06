@@ -1,0 +1,3 @@
+{"trace_id": "8b6647acf134", "step": "input_received", "timestamp": "2026-05-06T05:14:54.608298+00:00", "data": {"raw_text": "Buy milk", "input_type": "other", "source": "cli"}}
+{"trace_id": "8b6647acf134", "step": "organizer_error", "timestamp": "2026-05-06T05:14:54.608542+00:00", "data": {"message": "Failed to organize ideas: 'NoneType' object has no attribute 'with_structured_output'", "type": "organizer_error"}}
+{"trace_id": "8b6647acf134", "step": "final_output", "timestamp": "2026-05-06T05:14:54.608554+00:00", "data": {"total_errors": 1, "has_input": true, "has_organized": false, "has_plan": false, "has_tool_actions": false, "total_actions": 0}}

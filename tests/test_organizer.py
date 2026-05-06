@@ -21,7 +21,7 @@ def make_mock_llm(return_value: OrganizedIdeaOutput):
             return return_value
 
     class MockLLM:
-        def with_structured_output(self, schema):
+        def with_structured_output(self, schema, **kwargs):
             return MockStructuredLLM()
 
     return MockLLM()
@@ -317,7 +317,7 @@ class TestOrganizeIdeas:
         """LLM failures should be wrapped in OrganizerError."""
 
         class FailingLLM:
-            def with_structured_output(self, schema):
+            def with_structured_output(self, schema, **kwargs):
                 raise RuntimeError("API connection failed")
 
         raw = RawIdeaInput(raw_text="Some text")

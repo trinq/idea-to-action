@@ -65,7 +65,7 @@ def generate_plan(
     ]
 
     try:
-        structured_llm = llm.with_structured_output(PlanResult)
+        structured_llm = llm.with_structured_output(PlanResult, method="json_mode")
         result = structured_llm.invoke(messages)
     except LLMConfigError:
         raise
