@@ -5,7 +5,6 @@ Uses Notion Integration Token (Bearer auth).
 Same interface as FakeTaskManagerTool — approval-gated.
 """
 
-import os
 from datetime import UTC, datetime
 
 from notion_client import Client
@@ -99,6 +98,11 @@ class NotionTaskManagerTool:
                 f"Status is '{action.approval_status.value}', requires 'approved'."
             )
 
+        if not self._database_id:
+            raise NotionAuthError(
+                "Notion database ID not configured. Set NOTION_DATABASE_ID environment variable."
+            )
+
         client = self._get_client()
         properties = self._build_page_properties(action.action_data)
         description = action.action_data.get("description")
@@ -109,6 +113,10 @@ class NotionTaskManagerTool:
                 properties=properties,
             )
         except APIResponseError as e:
+            if e.status == 401:
+                raise NotionAuthError(
+                    "Notion API key is invalid. Check your NOTION_API_KEY environment variable."
+                ) from e
             if e.status == 429:
                 raise NotionTaskError(
                     "Notion rate limit exceeded. Try again in a few seconds."
@@ -118,6 +126,13 @@ class NotionTaskManagerTool:
             ) from e
 
         page_id = page["id"]
+
+        result = {
+            "status": "created",
+            "notion_page_id": page_id,
+            "notion_page_url": page.get("url", ""),
+            "task_title": action.action_data.get("title"),
+        }
 
         # Write description as page content (paragraph block)
         if description:
@@ -138,16 +153,9 @@ class NotionTaskManagerTool:
                     }],
                 )
             except APIResponseError as e:
-                raise NotionTaskError(
-                    f"Notion API error while appending description: {e}"
-                ) from e
+                result["warning"] = f"Task created but description could not be added: {e}"
 
-        return {
-            "status": "created",
-            "notion_page_id": page_id,
-            "notion_page_url": page.get("url", ""),
-            "task_title": action.action_data.get("title"),
-        }
+        return result
 
     def _build_page_properties(self, action_data: dict) -> dict:
         """Build Notion page properties from action_data.
@@ -158,7 +166,7 @@ class NotionTaskManagerTool:
         - effort -> Effort (select)
         - due_date -> Due Date (date, optional)
         """
-        title = action_data.get("title", "Untitled Task")
+        title = action_data.get("title") or "Untitled Task"
         priority = action_data.get("priority", "medium")
         effort = action_data.get("effort", "medium")
         due_date = action_data.get("due_date")
@@ -181,8 +189,9 @@ class NotionTaskManagerTool:
         }
 
         if due_date:
+            date_only = due_date.split("T")[0] if "T" in due_date else due_date
             properties["Due Date"] = {
-                "date": {"start": due_date}
+                "date": {"start": date_only}
             }
 
         return properties
