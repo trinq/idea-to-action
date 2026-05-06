@@ -311,7 +311,7 @@
       "area": "integration",
       "title": "Google Calendar integration",
       "user_visible_behavior": "The system creates real Google Calendar events from approved draft calendar actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Authenticate with Google Calendar API via OAuth2.",
         "Create a calendar event from an approved draft action.",
@@ -319,8 +319,16 @@
         "Confirm event details match the draft (title, date, time, duration).",
         "Handle API errors gracefully (auth expired, network, quota)."
       ],
-      "evidence": [],
-      "notes": "Requires Google Cloud project with Calendar API enabled. OAuth2 credentials via env/config file. All writes approval-gated."
+      "evidence": [
+        "16/16 tests passing in tests/test_google_calendar.py",
+        "GoogleCalendarTool: OAuth2 Web Flow auth, token refresh, approval-gated execute()",
+        "ToolRegistry auto-detects credentials → GoogleCalendarTool, else FakeCalendarTool",
+        "Event body mapping: timed (dateTime+timeZone), all-day (date), no-date (now)",
+        "scripts/auth_google.py for one-time OAuth2 browser flow",
+        "UI shows Google Calendar connection status and event links",
+        "Error hierarchy: GoogleIntegrationError ← GoogleAuthError, GoogleCalendarError"
+      ],
+      "notes": "Requires Google Cloud project with Calendar API enabled. Run scripts/auth_google.py once to authenticate. All writes approval-gated."
     },
     {
       "id": "F015",

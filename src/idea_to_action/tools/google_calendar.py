@@ -193,6 +193,7 @@ class GoogleCalendarTool:
         """Build a Google Calendar event body from action_data.
 
         Handles both timed events (date + time) and all-day events (date only).
+        Handles date strings in various formats (ISO datetime or date-only).
         """
         title = action_data.get("title", "Untitled Event")
         description = action_data.get("description", "")
@@ -206,43 +207,48 @@ class GoogleCalendarTool:
         }
 
         if date_str:
+            # Extract date-only part (handle both "2026-05-13" and "2026-05-13T00:00:00")
+            date_only = date_str.split("T")[0] if "T" in date_str else date_str
+
             if time_str:
+                # Extract time-only part (handle both "18:00" and "18:00:00")
+                time_only = time_str.split("T")[-1] if "T" in time_str else time_str
+                # Ensure HH:MM:SS format
+                if time_only.count(":") == 1:
+                    time_only = f"{time_only}:00"
+
                 # Timed event: use dateTime with timezone
-                start_dt = f"{date_str}T{time_str}:00"
-                # Parse to compute end time
+                start_iso = f"{date_only}T{time_only}"
                 try:
-                    start = datetime.fromisoformat(start_dt)
-                except ValueError:
-                    # Fallback: just pass through
+                    start = datetime.fromisoformat(start_iso)
+                    end = start + timedelta(minutes=int(duration))
                     body["start"] = {
-                        "dateTime": start_dt,
+                        "dateTime": start.isoformat(),
                         "timeZone": TIMEZONE,
                     }
                     body["end"] = {
-                        "dateTime": start_dt,
+                        "dateTime": end.isoformat(),
                         "timeZone": TIMEZONE,
                     }
-                    return body
-
-                end = start + timedelta(minutes=int(duration))
-                body["start"] = {
-                    "dateTime": start.isoformat(),
-                    "timeZone": TIMEZONE,
-                }
-                body["end"] = {
-                    "dateTime": end.isoformat(),
-                    "timeZone": TIMEZONE,
-                }
+                except ValueError:
+                    # Fallback: pass through as-is
+                    body["start"] = {
+                        "dateTime": start_iso,
+                        "timeZone": TIMEZONE,
+                    }
+                    body["end"] = {
+                        "dateTime": start_iso,
+                        "timeZone": TIMEZONE,
+                    }
             else:
                 # All-day event: use date only (no timezone for all-day)
-                body["start"] = {"date": date_str}
-                # For all-day events, Google uses the next day as end
+                body["start"] = {"date": date_only}
                 try:
-                    parsed_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    parsed_date = datetime.strptime(date_only, "%Y-%m-%d").date()
                     next_day = parsed_date + timedelta(days=1)
                     body["end"] = {"date": next_day.isoformat()}
                 except ValueError:
-                    body["end"] = {"date": date_str}
+                    body["end"] = {"date": date_only}
         else:
             # No date — create a 1-hour event now
             now = datetime.now(timezone.utc)

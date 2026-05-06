@@ -139,6 +139,14 @@ def _render_tool_actions() -> None:
         return
 
     st.subheader("Draft Tool Actions")
+
+    # Show Google Calendar connection status
+    registry = ToolRegistry()
+    if registry.is_google_calendar_connected:
+        st.success("Google Calendar: Connected")
+    else:
+        st.caption("Google Calendar: Not configured (using fake tool)")
+
     st.write(f"{len(tool_actions.actions)} action(s) pending approval.")
 
     for idx, action in enumerate(tool_actions.actions):
@@ -181,7 +189,15 @@ def _render_tool_actions() -> None:
             exec_result = st.session_state.execution_results.get(state_key)
             if exec_result:
                 if exec_result["success"]:
-                    st.success(f"Execution result: {exec_result['result']}")
+                    result_data = exec_result["result"]
+                    # Show Google Calendar event link if available
+                    if result_data.get("html_link"):
+                        st.success(
+                            f"Event created: [{result_data['event_summary']}]({result_data['html_link']}) "
+                            f"(ID: `{result_data['google_event_id']}`)"
+                        )
+                    else:
+                        st.success(f"Execution result: {result_data}")
                 else:
                     st.error(f"Execution failed: {exec_result['error']}")
 
