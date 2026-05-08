@@ -143,16 +143,19 @@ class TestToolRegistry:
         result = registry.execute(action)
         assert result["status"] == "fake_executed"
 
-    def test_registry_unknown_action_type_raises(self) -> None:
+    def test_registry_routes_send_email_to_fake_email(self) -> None:
         registry = ToolRegistry()
         action = ToolAction(
             action_type=ActionType.SEND_EMAIL,
-            action_data={"to": "test@test.com"},
+            action_data={"to": "test@test.com", "subject": "Hello"},
             approval_required=True,
             approval_status=ApprovalStatus.APPROVED,
         )
-        with pytest.raises(ValueError, match="No tool registered"):
-            registry.execute(action)
+
+        result = registry.execute(action)
+
+        assert result["status"] == "fake_created"
+        assert result["email_to"] == "test@test.com"
 
 
 class TestToolDraftGenerator:

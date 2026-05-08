@@ -7,10 +7,17 @@ falls back to fake tools otherwise.
 
 import os
 
-from idea_to_action.config import GOOGLE_CREDENTIALS_PATH, GOOGLE_TOKEN_PATH
+from idea_to_action.config import (
+    GMAIL_CREDENTIALS_PATH,
+    GMAIL_TOKEN_PATH,
+    GOOGLE_CREDENTIALS_PATH,
+    GOOGLE_TOKEN_PATH,
+)
 from idea_to_action.schemas.tool_actions import ActionType, ToolAction
 from idea_to_action.tools.fake_calendar import FakeCalendarTool
+from idea_to_action.tools.fake_email import FakeEmailTool
 from idea_to_action.tools.fake_task_manager import FakeTaskManagerTool
+from idea_to_action.tools.gmail_draft import GmailDraftTool
 
 
 class ToolRegistry:
@@ -37,9 +44,16 @@ class ToolRegistry:
         else:
             self._calendar = FakeCalendarTool()
 
+        # Gmail Drafts: auto-detect based on credentials file
+        if os.path.exists(GMAIL_CREDENTIALS_PATH):
+            self._email = GmailDraftTool(GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH)
+        else:
+            self._email = FakeEmailTool()
+
         self._executors = {
             ActionType.CREATE_TASK: self._task_manager,
             ActionType.CREATE_CALENDAR_EVENT: self._calendar,
+            ActionType.SEND_EMAIL: self._email,
         }
 
     @property
@@ -51,6 +65,11 @@ class ToolRegistry:
     def is_notion_task_manager_connected(self) -> bool:
         """Whether Notion task manager (real) is configured, not fake."""
         return not isinstance(self._task_manager, FakeTaskManagerTool)
+
+    @property
+    def is_gmail_connected(self) -> bool:
+        """Whether Gmail Drafts (real) is configured, not fake."""
+        return not isinstance(self._email, FakeEmailTool)
 
     def execute(self, action: ToolAction) -> dict:
         """Route an approved action to the correct tool for execution.

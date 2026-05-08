@@ -300,3 +300,57 @@ class TestGmailExecuteWithMockedAPI:
         ):
             with pytest.raises(GmailDraftError, match="Gmail API error"):
                 tool.execute(_approved_email_action())
+
+
+class TestRegistryWithGmail:
+    def test_registry_uses_fake_email_when_credentials_missing(self, tmp_path) -> None:
+        import idea_to_action.tools.registry as registry_module
+        from idea_to_action.tools.fake_email import FakeEmailTool
+
+        with mock.patch.object(
+            registry_module, "GMAIL_CREDENTIALS_PATH", str(tmp_path / "missing.json")
+        ):
+            registry = registry_module.ToolRegistry()
+
+        assert registry.is_gmail_connected is False
+        assert isinstance(registry._email, FakeEmailTool)
+
+    def test_registry_execute_send_email_uses_fake_when_unconfigured(self, tmp_path) -> None:
+        import idea_to_action.tools.registry as registry_module
+        from idea_to_action.tools.fake_email import FakeEmailTool
+
+        with mock.patch.object(
+            registry_module, "GMAIL_CREDENTIALS_PATH", str(tmp_path / "missing.json")
+        ):
+            registry = registry_module.ToolRegistry()
+
+        result = registry.execute(_approved_email_action())
+
+        assert isinstance(registry._email, FakeEmailTool)
+        assert result == {
+            "status": "fake_created",
+            "email_to": "person@example.com",
+            "email_subject": "Hello",
+        }
+
+    def test_registry_uses_gmail_draft_when_credentials_exist_without_auth(
+        self, tmp_path
+    ) -> None:
+        import idea_to_action.tools.registry as registry_module
+        from idea_to_action.tools.gmail_draft import GmailDraftTool
+
+        credentials_path = tmp_path / "gmail_client_secret.json"
+        token_path = tmp_path / "gmail_token.json"
+        credentials_path.write_text("{}")
+
+        with mock.patch.object(
+            registry_module, "GMAIL_CREDENTIALS_PATH", str(credentials_path)
+        ), mock.patch.object(
+            registry_module, "GMAIL_TOKEN_PATH", str(token_path)
+        ):
+            registry = registry_module.ToolRegistry()
+
+        assert registry.is_gmail_connected is True
+        assert isinstance(registry._email, GmailDraftTool)
+        assert registry._email._credentials_path == str(credentials_path)
+        assert registry._email._token_path == str(token_path)
