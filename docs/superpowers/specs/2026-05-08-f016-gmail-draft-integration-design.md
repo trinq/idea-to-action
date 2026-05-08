@@ -36,7 +36,9 @@
 
 | File | Action |
 |---|---|
-| `src/idea_to_action/config.py` | Modify — add `GMAIL_CREDENTIALS_PATH`, `GMAIL_TOKEN_PATH` |
+| `src/idea_to_action/config.py` | Modify — add `GMAIL_CREDENTIALS_PATH`, `GMAIL_TOKEN_PATH` using `I2A_*` env vars |
+| `pyproject.toml` | Verify/modify — Gmail can reuse existing Google optional dependencies from `[project.optional-dependencies].google` |
+| `.gitignore` | Modify — ignore Gmail OAuth credentials/token files explicitly |
 | `src/idea_to_action/tools/gmail_draft.py` | Create — real Gmail draft tool |
 | `src/idea_to_action/tools/fake_email.py` | Create — fake fallback for `SEND_EMAIL` |
 | `src/idea_to_action/tools/registry.py` | Modify — route `SEND_EMAIL`, expose Gmail connection status |
@@ -52,20 +54,20 @@
 
 ## Config
 
-Add Gmail-specific credentials paths separate from Calendar:
+Add Gmail-specific credentials paths separate from Calendar, following the existing `I2A_*` environment variable and `DATA_DIR` conventions:
 
 ```python
 GMAIL_CREDENTIALS_PATH = os.environ.get(
-    "GMAIL_CREDENTIALS_PATH",
-    os.path.join(PROJECT_ROOT, "credentials", "gmail_credentials.json"),
+    "I2A_GMAIL_CREDENTIALS",
+    os.path.join(_PROJECT_ROOT, "gmail_client_secret.json"),
 )
 GMAIL_TOKEN_PATH = os.environ.get(
-    "GMAIL_TOKEN_PATH",
-    os.path.join(PROJECT_ROOT, "credentials", "gmail_token.json"),
+    "I2A_GMAIL_TOKEN",
+    os.path.join(DATA_DIR, "gmail_token.json"),
 )
 ```
 
-Use a separate token file because Gmail needs a different OAuth scope from Calendar. This avoids invalidating or confusing the existing Calendar token.
+Use a separate token file because Gmail needs a different OAuth scope from Calendar. This avoids invalidating or confusing the existing Calendar token. Credentials default to the project root like `client_secret.json`; refresh tokens default to `DATA_DIR` like `google_token.json`.
 
 ---
 
@@ -77,13 +79,14 @@ Use the narrow compose scope:
 SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
 ```
 
-This permits creating and managing drafts without granting broader mailbox access or send permissions beyond what Gmail compose scope allows. The tool still only calls `drafts().create(...)`, never `messages().send(...)`.
+This is the narrowest Gmail scope that supports draft creation. It can also permit sending drafts if code calls Gmail send endpoints, so F016 relies on a strict code-level safety invariant: the tool must only call `users().drafts().create(...)` and must never call `users().messages().send(...)`, `users().drafts().send(...)`, or any equivalent send endpoint. Tests must assert the draft create call path.
 
 ---
 
 ## Action Payload
 
-F016 consumes manually-created or externally-supplied `ToolAction` objects:
+F016 consumes manually-created or externally-supplied `ToolAction` objects. There is intentionally no `draft_create_email()` method in the MVP because the planner does not yet produce `DraftEmail` objects; adding that method should wait until the later end-to-end email extraction feature.
+
 
 ```python
 ToolAction(
@@ -278,10 +281,57 @@ if __name__ == "__main__":
 User flow:
 
 1. Enable Gmail API in Google Cloud.
-2. Download OAuth client credentials to `credentials/gmail_credentials.json`.
+2. Download OAuth client credentials to `gmail_client_secret.json` or set `I2A_GMAIL_CREDENTIALS`.
 3. Run `python3 scripts/auth_gmail.py`.
 4. Approve Gmail compose scope in browser.
-5. Token is saved to `credentials/gmail_token.json`.
+5. Token is saved to `DATA_DIR/gmail_token.json` or `I2A_GMAIL_TOKEN`.
+
+---
+
+## Trace Logging
+
+`GmailDraftTool.execute()` must log successful real draft creation via `TraceLogger` without recording message body content or OAuth secrets:
+
+```python
+trace_logger.log("gmail_draft_execute", {
+    "action_type": action.action_type.value,
+    "approval_status": action.approval_status.value,
+    "email_to": action.action_data.get("to"),
+    "email_subject": action.action_data.get("subject"),
+    "gmail_draft_id": result.get("gmail_draft_id"),
+    "gmail_message_id": result.get("gmail_message_id"),
+})
+```
+
+Do not log `body`, `cc`, `bcc`, raw MIME content, access tokens, refresh tokens, or credential file contents.
+
+---
+
+## Git Ignore
+
+Add explicit ignore entries for Gmail OAuth artifacts:
+
+```gitignore
+gmail_client_secret.json
+gmail_token.json
+```
+
+`data/` is already ignored, so the default `DATA_DIR/gmail_token.json` is covered; explicit entries protect users who override token paths or place Gmail credentials in the project root.
+
+---
+
+## Dependencies
+
+Gmail uses the same Google client libraries as Calendar:
+
+```toml
+google = [
+    "google-auth-oauthlib>=1.0.0",
+    "google-api-python-client>=2.0.0",
+]
+```
+
+No new dependency should be added unless implementation reveals a missing package.
 
 ---
 
