@@ -16,7 +16,9 @@
 | `tests/test_notion_task_manager.py` | Create — ~14 tests |
 | `src/idea_to_action/config.py` | Modify — add `NOTION_API_KEY`, `NOTION_DATABASE_ID` |
 | `src/idea_to_action/tools/registry.py` | Modify — auto-detect Notion, add property |
-| `src/idea_to_action/ui/app.py` | Modify — show Notion connection status and page links |
+| `src/idea_to_action/ui/app.py` | Modify — show Notion connection status and page links; auto-load `.env` for local Streamlit runs |
+| `scripts/setup_notion.py` | Create/modify — interactive setup, URL/ID extraction, property creation for database and data source schemas |
+| `tests/test_setup_notion.py` | Create — regression coverage for data source schema setup |
 | `pyproject.toml` | Modify — add `notion` optional deps |
 | `feature_list.json` | Modify — F015 to `passing` |
 
@@ -53,6 +55,8 @@ The Notion database must have these properties (names are convention-based, not 
 | `priority` | `Priority` | select (options: "high", "medium", "low") |
 | `effort` | `Effort` | select (options: "small", "medium", "large") |
 | `suggested_due_date` | `Due Date` | date (optional, omitted when None) |
+
+`scripts/setup_notion.py` creates missing `Priority`, `Effort`, and `Due Date` properties. For current Notion databases, the database response includes `data_sources`; the writable property schema lives on `client.data_sources`, so setup must update `client.data_sources.update(data_source_id=...)`. Older database responses without `data_sources` use `client.databases.update(database_id=...)`.
 
 ---
 

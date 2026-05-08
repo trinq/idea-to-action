@@ -4,7 +4,9 @@
 
 **Goal:** Replace `FakeTaskManagerTool` with `NotionTaskManagerTool` that creates real tasks in a Notion database from approved draft actions via the `notion-client` SDK.
 
-**Architecture:** Self-contained `NotionTaskManagerTool` class in `src/idea_to_action/tools/notion_task_manager.py` with the same `execute(action)` / `draft_create_task(task)` interface as `FakeTaskManagerTool`. Auth via `NOTION_API_KEY` env var (Bearer token). `ToolRegistry` auto-detects both env vars and falls back to `FakeTaskManagerTool`. Description written as page content blocks. Rate limit errors wrapped cleanly.
+**Architecture:** Self-contained `NotionTaskManagerTool` class in `src/idea_to_action/tools/notion_task_manager.py` with the same `execute(action)` / `draft_create_task(task)` interface as `FakeTaskManagerTool`. Auth via `NOTION_API_KEY` env var (Bearer token). `ToolRegistry` auto-detects both env vars and falls back to `FakeTaskManagerTool`. Description written as page content blocks. Rate limit errors wrapped cleanly. `scripts/setup_notion.py` supports both legacy database property schemas and current Notion data source schemas when creating required properties.
+
+**Post-implementation note:** Notion databases created in the current UI expose writable property schemas through `database["data_sources"][0]["id"]`. Setup must call `client.data_sources.retrieve/update(data_source_id=...)` for those databases; `client.databases.update(database_id=...)` can return successfully without changing visible columns.
 
 **Tech Stack:** `notion-client` (official SDK), pytest with `unittest.mock`.
 

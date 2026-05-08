@@ -19,7 +19,7 @@ The system creates real tasks in your Notion database when you approve draft tas
 
 ## Step 2: Set Up Your Notion Database
 
-Create a database (or use an existing one) with these properties:
+Create a database (or use an existing one). The setup script can add the required properties automatically:
 
 | Property Name | Type | Options |
 |---|---|---|
@@ -30,6 +30,8 @@ Create a database (or use an existing one) with these properties:
 
 The property names are **case-sensitive** — they must match exactly.
 
+Notion's newer API exposes database columns through a nested **data source** schema. The setup script handles both older database schemas and newer data source schemas.
+
 ## Step 3: Give Your Integration Access
 
 1. Open the Notion database page
@@ -37,24 +39,40 @@ The property names are **case-sensitive** — they must match exactly.
 3. Find your integration (e.g. "idea-to-action") and click it
 4. Confirm the access dialog
 
-## Step 4: Copy Your Database ID
+## Step 4: Run the Setup Script
 
-Open your Notion database in a browser. The URL looks like:
-
-```
-https://www.notion.so/workspace/1a2b3c4d5e6f?v=...
-```
-
-The database ID is the part before `?v=` — in this example, `1a2b3c4d5e6f`.
-
-## Step 5: Configure Environment Variables
+Run:
 
 ```bash
-export NOTION_API_KEY="ntn_your_integration_secret"
-export NOTION_DATABASE_ID="1a2b3c4d5e6f"
+python3 scripts/setup_notion.py
 ```
 
-Add these to your shell profile (`~/.zshrc`, `~/.bashrc`) for persistence.
+The script asks for:
+
+1. Your Notion integration secret
+2. The full Notion database URL or database ID
+3. Confirmation that the database has been shared with the integration
+
+It then:
+
+- Extracts and normalizes the database ID
+- Verifies the database is visible to the integration
+- Adds `Priority`, `Effort`, and `Due Date` properties if missing
+- Saves `NOTION_API_KEY` and `NOTION_DATABASE_ID` to `.env`
+
+Example accepted URL:
+
+```text
+https://www.notion.so/workspace/My-Tasks-264c3e246e0c44fb91987c8948bd0ec4?v=...
+```
+
+## Step 5: Load Environment Variables
+
+The Streamlit UI auto-loads `.env`. For terminal commands, either restart your terminal or run the command printed by the setup script:
+
+```bash
+source /path/to/idea-to-action/.env
+```
 
 ## Step 6: Verify It's Connected
 
@@ -127,6 +145,7 @@ print(result["notion_page_url"])
 | No database ID | `Notion database ID not configured` | Set `NOTION_DATABASE_ID` |
 | Invalid API key (401) | `Notion API key is invalid` | Check key in Notion integrations page |
 | Database not found (404) | `Notion API error: ...` | Check database ID, verify integration has access |
+| Properties not visible after setup | Script says properties added but UI does not show them | Re-run setup with the current script; it updates Notion data source schemas correctly |
 | Rate limit (429) | `Notion rate limit exceeded` | Wait a few seconds, try again |
 | Description append fails | Task still created, warning shown | Task exists in Notion but without description |
 
