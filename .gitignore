@@ -9,5 +9,7 @@ traces/
 reports/
 client_secret.json
 google_token.json
+gmail_client_secret.json
+gmail_token.json
 .env
 .worktrees/

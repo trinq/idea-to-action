@@ -35,6 +35,17 @@ GOOGLE_TOKEN_PATH = os.environ.get(
     "I2A_GOOGLE_TOKEN",
     os.path.join(DATA_DIR, "google_token.json"),
 )
+
+# Gmail Drafts
+GMAIL_CREDENTIALS_PATH = os.environ.get(
+    "I2A_GMAIL_CREDENTIALS",
+    os.path.join(_PROJECT_ROOT, "gmail_client_secret.json"),
+)
+GMAIL_TOKEN_PATH = os.environ.get(
+    "I2A_GMAIL_TOKEN",
+    os.path.join(DATA_DIR, "gmail_token.json"),
+)
+
 TIMEZONE = os.environ.get("I2A_TIMEZONE", "Asia/Ho_Chi_Minh")
 
 # Notion Task Manager
