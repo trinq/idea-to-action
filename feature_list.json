@@ -352,9 +352,12 @@
         "Description written as page content (paragraph block), graceful fallback on append failure",
         "Rate limit (429) and unauthorized (401) wrapped with clear error messages",
         "UI shows Notion connection status and page links",
+        "Interactive setup script saves .env config and creates required properties",
+        "Setup supports current Notion data source schemas via client.data_sources.update",
+        "1/1 setup regression test passing in tests/test_setup_notion.py",
         "Error hierarchy: NotionIntegrationError ← NotionAuthError, NotionTaskError"
       ],
-      "notes": "Requires Notion integration with database. Set NOTION_API_KEY and NOTION_DATABASE_ID env vars. Database must have Name, Priority, Effort, Due Date properties."
+      "notes": "Requires Notion integration with database. Run scripts/setup_notion.py to save NOTION_API_KEY/NOTION_DATABASE_ID to .env and create Name, Priority, Effort, Due Date properties. Supports newer Notion data source schema for visible database columns."
     },
     {
       "id": "F016",
