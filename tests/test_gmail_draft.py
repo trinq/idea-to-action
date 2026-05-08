@@ -43,3 +43,64 @@ def test_gmail_config_uses_i2a_env_vars() -> None:
 
         assert reloaded.GMAIL_CREDENTIALS_PATH == "/tmp/custom_gmail_creds.json"
         assert reloaded.GMAIL_TOKEN_PATH == "/tmp/custom_gmail_token.json"
+
+
+from idea_to_action.schemas.tool_actions import ActionType, ApprovalStatus, ToolAction
+
+
+def _approved_email_action(action_data: dict | None = None) -> ToolAction:
+    return ToolAction(
+        action_type=ActionType.SEND_EMAIL,
+        action_data=action_data or {
+            "to": "person@example.com",
+            "subject": "Hello",
+            "body": "Draft body",
+        },
+        approval_required=True,
+        approval_status=ApprovalStatus.APPROVED,
+    )
+
+
+def _pending_email_action() -> ToolAction:
+    return ToolAction(
+        action_type=ActionType.SEND_EMAIL,
+        action_data={"to": "person@example.com", "subject": "Hello"},
+        approval_required=True,
+        approval_status=ApprovalStatus.PENDING,
+    )
+
+
+class TestFakeEmailTool:
+    def test_fake_email_execute_requires_approval(self) -> None:
+        from idea_to_action.tools.fake_email import FakeEmailTool
+
+        tool = FakeEmailTool()
+
+        with pytest.raises(PermissionError, match="Cannot execute unapproved"):
+            tool.execute(_pending_email_action())
+
+    def test_fake_email_execute_rejects_wrong_action_type(self) -> None:
+        from idea_to_action.tools.fake_email import FakeEmailTool
+
+        tool = FakeEmailTool()
+        action = ToolAction(
+            action_type=ActionType.CREATE_TASK,
+            action_data={"title": "Task"},
+            approval_required=True,
+            approval_status=ApprovalStatus.APPROVED,
+        )
+
+        with pytest.raises(ValueError, match="cannot execute action type"):
+            tool.execute(action)
+
+    def test_fake_email_execute_returns_fake_created(self) -> None:
+        from idea_to_action.tools.fake_email import FakeEmailTool
+
+        tool = FakeEmailTool()
+        result = tool.execute(_approved_email_action())
+
+        assert result == {
+            "status": "fake_created",
+            "email_to": "person@example.com",
+            "email_subject": "Hello",
+        }
