@@ -10,3 +10,4 @@ reports/
 client_secret.json
 google_token.json
 .env
+.worktrees/
