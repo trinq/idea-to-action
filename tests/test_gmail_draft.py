@@ -319,9 +319,15 @@ class TestRegistryWithGmail:
         import idea_to_action.tools.registry as registry_module
         from idea_to_action.tools.fake_email import FakeEmailTool
 
+        def fail_on_gmail_draft_import(name, *args, **kwargs):
+            if name == "idea_to_action.tools.gmail_draft":
+                raise ImportError("gmail_draft should not be imported")
+            return real_import(name, *args, **kwargs)
+
+        real_import = __import__
         with mock.patch.object(
             registry_module, "GMAIL_CREDENTIALS_PATH", str(tmp_path / "missing.json")
-        ):
+        ), mock.patch("builtins.__import__", side_effect=fail_on_gmail_draft_import):
             registry = registry_module.ToolRegistry()
 
         result = registry.execute(_approved_email_action())

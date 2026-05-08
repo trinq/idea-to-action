@@ -17,7 +17,6 @@ from idea_to_action.schemas.tool_actions import ActionType, ToolAction
 from idea_to_action.tools.fake_calendar import FakeCalendarTool
 from idea_to_action.tools.fake_email import FakeEmailTool
 from idea_to_action.tools.fake_task_manager import FakeTaskManagerTool
-from idea_to_action.tools.gmail_draft import GmailDraftTool
 
 
 class ToolRegistry:
@@ -46,6 +45,7 @@ class ToolRegistry:
 
         # Gmail Drafts: auto-detect based on credentials file
         if os.path.exists(GMAIL_CREDENTIALS_PATH):
+            from idea_to_action.tools.gmail_draft import GmailDraftTool
             self._email = GmailDraftTool(GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH)
         else:
             self._email = FakeEmailTool()
