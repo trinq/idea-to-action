@@ -4,6 +4,7 @@ import base64
 from email import message_from_bytes
 import importlib
 import os
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -47,6 +48,13 @@ def test_gmail_config_uses_i2a_env_vars() -> None:
 
         assert reloaded.GMAIL_CREDENTIALS_PATH == "/tmp/custom_gmail_creds.json"
         assert reloaded.GMAIL_TOKEN_PATH == "/tmp/custom_gmail_token.json"
+
+
+def test_auth_gmail_script_exists() -> None:
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "auth_gmail.py"
+
+    assert script_path.exists()
+    assert "GmailDraftTool.run_auth_flow()" in script_path.read_text()
 
 
 def _approved_email_action(action_data: dict | None = None) -> ToolAction:
