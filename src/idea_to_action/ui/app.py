@@ -146,6 +146,17 @@ def _reject_action(idx: int, action: ToolAction) -> None:
     }
 
 
+def _format_execution_result_message(result_data: dict) -> str:
+    """Return a human-readable execution result message."""
+    if result_data.get("gmail_draft_id"):
+        return (
+            f"Gmail draft created: {result_data.get('email_subject', '')} "
+            f"to {result_data.get('email_to', '')} "
+            f"(Draft ID: `{result_data['gmail_draft_id']}`)"
+        )
+    return f"Execution result: {result_data}"
+
+
 def _render_tool_actions() -> None:
     """Render the draft tool actions with approve/reject buttons."""
     result = st.session_state.pipeline_result
@@ -166,6 +177,11 @@ def _render_tool_actions() -> None:
         st.success("Notion: Connected")
     else:
         st.caption("Notion: Not configured (using fake tool)")
+
+    if registry.is_gmail_connected:
+        st.success("Gmail: Connected")
+    else:
+        st.caption("Gmail: Not configured (using fake tool)")
 
     st.write(f"{len(tool_actions.actions)} action(s) pending approval.")
 
@@ -222,6 +238,8 @@ def _render_tool_actions() -> None:
                             f"Task created: [{result_data['task_title']}]({result_data['notion_page_url']}) "
                             f"(ID: `{result_data['notion_page_id']}`)"
                         )
+                    elif result_data.get("gmail_draft_id"):
+                        st.success(_format_execution_result_message(result_data))
                     else:
                         st.success(f"Execution result: {result_data}")
                 else:

@@ -159,3 +159,21 @@ class TestUIModuleImports:
         assert app_module._approve_action is not None
         assert app_module._reject_action is not None
         assert app_module._render_tool_actions is not None
+
+    def test_format_execution_result_message_for_gmail_draft(self) -> None:
+        from idea_to_action.ui.app import _format_execution_result_message
+
+        message = _format_execution_result_message(
+            {
+                "status": "created",
+                "gmail_draft_id": "draft_123",
+                "gmail_message_id": "msg_123",
+                "email_to": "person@example.com",
+                "email_subject": "Hello",
+            }
+        )
+
+        assert "Gmail draft created" in message
+        assert "draft_123" in message
+        assert "person@example.com" in message
+        assert "Hello" in message
