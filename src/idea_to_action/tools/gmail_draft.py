@@ -140,12 +140,12 @@ class GmailDraftTool:
                 .execute()
             )
         except HttpError as e:
-            raise GmailDraftError(f"Gmail Draft API error: {e}") from e
+            raise GmailDraftError(f"Gmail API error: {e}") from e
 
         result = {
             "status": "created",
             "gmail_draft_id": created.get("id"),
-            "message_id": created.get("message", {}).get("id"),
+            "gmail_message_id": created.get("message", {}).get("id"),
         }
 
         tracer = TraceLogger(f"gmail-draft-{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}")
@@ -153,7 +153,7 @@ class GmailDraftTool:
             "gmail_draft_created",
             {
                 "draft_id": result["gmail_draft_id"],
-                "message_id": result["message_id"],
+                "message_id": result["gmail_message_id"],
                 "to": action.action_data.get("to"),
                 "subject": action.action_data.get("subject", ""),
             },

@@ -200,3 +200,103 @@ class TestBuildMimeMessage:
         tool = GmailDraftTool()
         with pytest.raises(GmailDraftError, match="recipient"):
             tool._build_mime_message({"to": to_value, "subject": "No recipient"})
+
+
+class TestGmailAuth:
+    def test_execute_without_auth_raises_when_token_missing(self, tmp_path) -> None:
+        from idea_to_action.tools.gmail_draft import GmailAuthError, GmailDraftTool
+
+        token_path = tmp_path / "missing_token.json"
+        tool = GmailDraftTool(token_path=str(token_path))
+
+        with pytest.raises(GmailAuthError, match="Not authenticated"):
+            tool.execute(_approved_email_action())
+
+    def test_expired_token_with_refresh_token_refreshes_and_saves_credentials(
+        self, tmp_path
+    ) -> None:
+        from idea_to_action.tools import gmail_draft
+        from idea_to_action.tools.gmail_draft import GmailDraftTool
+
+        token_path = tmp_path / "gmail_token.json"
+        token_path.write_text("{}")
+        creds = mock.Mock()
+        creds.expired = True
+        creds.refresh_token = "refresh-token"
+        creds.valid = True
+        creds.to_json.return_value = '{"token": "refreshed"}'
+
+        with mock.patch.object(
+            gmail_draft.Credentials,
+            "from_authorized_user_file",
+            return_value=creds,
+        ), mock.patch.object(gmail_draft, "Request", return_value="request"):
+            result = GmailDraftTool(token_path=str(token_path))._get_credentials()
+
+        assert result is creds
+        creds.refresh.assert_called_once_with("request")
+        assert token_path.read_text() == '{"token": "refreshed"}'
+
+
+class TestGmailExecuteWithMockedAPI:
+    def test_execute_approved_action_creates_draft_and_returns_ids(self) -> None:
+        from idea_to_action.tools.gmail_draft import GmailDraftTool
+
+        tool = GmailDraftTool()
+        service = mock.Mock()
+        create_result = {
+            "id": "draft-123",
+            "message": {"id": "message-456"},
+        }
+        service.users.return_value.drafts.return_value.create.return_value.execute.return_value = create_result
+
+        with mock.patch.object(tool, "_get_service", return_value=service), mock.patch.object(
+            tool, "_build_mime_message", return_value="encoded-message"
+        ), mock.patch("idea_to_action.tools.gmail_draft.TraceLogger"):
+            result = tool.execute(_approved_email_action())
+
+        service.users.return_value.drafts.return_value.create.assert_called_once_with(
+            userId="me", body={"message": {"raw": "encoded-message"}}
+        )
+        service.users.return_value.drafts.return_value.create.return_value.execute.assert_called_once_with()
+        assert result == {
+            "status": "created",
+            "gmail_draft_id": "draft-123",
+            "gmail_message_id": "message-456",
+        }
+
+    def test_execute_does_not_call_send_endpoint(self) -> None:
+        from idea_to_action.tools.gmail_draft import GmailDraftTool
+
+        tool = GmailDraftTool()
+        service = mock.Mock()
+        service.users.return_value.drafts.return_value.create.return_value.execute.return_value = {
+            "id": "draft-123",
+            "message": {"id": "message-456"},
+        }
+
+        with mock.patch.object(tool, "_get_service", return_value=service), mock.patch.object(
+            tool, "_build_mime_message", return_value="encoded-message"
+        ), mock.patch("idea_to_action.tools.gmail_draft.TraceLogger"):
+            tool.execute(_approved_email_action())
+
+        assert not service.users.return_value.messages.return_value.send.called
+        assert not service.users.return_value.drafts.return_value.send.called
+
+    def test_http_error_from_drafts_create_wraps_as_gmail_draft_error(self) -> None:
+        from googleapiclient.errors import HttpError
+
+        from idea_to_action.tools.gmail_draft import GmailDraftError, GmailDraftTool
+
+        tool = GmailDraftTool()
+        service = mock.Mock()
+        response = mock.Mock(status=500, reason="Server Error")
+        service.users.return_value.drafts.return_value.create.return_value.execute.side_effect = HttpError(
+            response, b'{"error": {"message": "boom"}}'
+        )
+
+        with mock.patch.object(tool, "_get_service", return_value=service), mock.patch.object(
+            tool, "_build_mime_message", return_value="encoded-message"
+        ):
+            with pytest.raises(GmailDraftError, match="Gmail API error"):
+                tool.execute(_approved_email_action())
