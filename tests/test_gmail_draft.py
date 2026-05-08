@@ -5,6 +5,7 @@ from email import message_from_bytes
 import importlib
 import os
 from pathlib import Path
+import runpy
 from unittest import mock
 
 import pytest
@@ -50,11 +51,27 @@ def test_gmail_config_uses_i2a_env_vars() -> None:
         assert reloaded.GMAIL_TOKEN_PATH == "/tmp/custom_gmail_token.json"
 
 
-def test_auth_gmail_script_exists() -> None:
+def test_auth_gmail_import_does_not_run_auth_flow() -> None:
     script_path = Path(__file__).resolve().parents[1] / "scripts" / "auth_gmail.py"
 
-    assert script_path.exists()
-    assert "GmailDraftTool.run_auth_flow()" in script_path.read_text()
+    with mock.patch(
+        "idea_to_action.tools.gmail_draft.GmailDraftTool.run_auth_flow"
+    ) as run_auth_flow:
+        namespace = runpy.run_path(str(script_path), run_name="auth_gmail_import_test")
+
+    run_auth_flow.assert_not_called()
+    assert callable(namespace["main"])
+
+
+def test_auth_gmail_main_delegates_to_gmail_auth_flow() -> None:
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "auth_gmail.py"
+
+    with mock.patch(
+        "idea_to_action.tools.gmail_draft.GmailDraftTool.run_auth_flow"
+    ) as run_auth_flow:
+        runpy.run_path(str(script_path), run_name="__main__")
+
+    run_auth_flow.assert_called_once_with()
 
 
 def _approved_email_action(action_data: dict | None = None) -> ToolAction:
