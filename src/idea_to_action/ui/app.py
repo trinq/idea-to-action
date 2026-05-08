@@ -4,6 +4,21 @@ Paste raw notes, run the pipeline, review organized output,
 and approve/reject draft tool actions.
 """
 
+import os
+from pathlib import Path
+
+# Auto-load .env file before any other imports that read env vars
+_env_file = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+if _env_file.exists():
+    with open(_env_file) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _, _val = _line.partition("=")
+                _key = _key.strip()
+                if _key not in os.environ:
+                    os.environ[_key] = _val.strip()
+
 import streamlit as st
 
 from idea_to_action.agent.llm_provider import LLMConfigError, create_llm

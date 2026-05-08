@@ -7,7 +7,45 @@ Run once:
 """
 
 import os
+import re
 import sys
+
+
+def _extract_database_id(raw: str) -> str | None:
+    """Extract a 32-char hex database ID from various input formats.
+
+    Handles:
+    - Full URL: https://www.notion.so/workspace/Title-264c3e246e0c44fb91987c8948bd0ec4?v=...
+    - URL with &t= params: 264c3e246e0c44fb91987c8948bd0ec4&t=359b01bf...
+    - Raw hex: 264c3e246e0c44fb91987c8948bd0ec4
+    - UUID with dashes: 264c3e24-6e0c-44fb-9198-7c8948bd0ec4
+
+    Returns the ID in UUID format with dashes, or None if not found.
+    """
+    # Strip URL parameters (?v=... and &t=...)
+    raw = raw.split("?")[0].split("&")[0].strip().rstrip("/")
+
+    # If it's a URL, extract the last path segment
+    if "/" in raw:
+        raw = raw.split("/")[-1]
+
+    # If there's a title prefix (e.g. "My-Tasks-264c3e24..."), take the last 32 hex chars
+    hex_match = re.search(r"([0-9a-f]{32})$", raw.replace("-", ""), re.IGNORECASE)
+    if hex_match:
+        hex_id = hex_match.group(1)
+        # Format as UUID with dashes: 8-4-4-4-12
+        return f"{hex_id[:8]}-{hex_id[8:12]}-{hex_id[12:16]}-{hex_id[16:20]}-{hex_id[20:]}"
+
+    # Try if it's already a valid UUID with dashes
+    uuid_match = re.match(
+        r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        raw,
+        re.IGNORECASE,
+    )
+    if uuid_match:
+        return raw
+
+    return None
 
 
 def main() -> None:
@@ -25,13 +63,21 @@ def main() -> None:
 
     # Step 2: Database ID
     print("\nStep 2: Get your database ID")
-    print("  Open your Notion database in a browser. The URL looks like:")
-    print("  https://www.notion.so/workspace/1a2b3c4d5e6f?v=...")
-    print("  Copy the part before ?v= (e.g. 1a2b3c4d5e6f)\n")
-    database_id = input("Paste your database ID here: ").strip()
-    if not database_id:
+    print("  Option A: Paste the FULL URL of your Notion database")
+    print("  Option B: Paste just the database ID (32 hex characters)\n")
+    print("  Example URL: https://www.notion.so/workspace/My-Tasks-264c3e246e0c44fb91987c8948bd0ec4?v=...\n")
+    raw_input = input("Paste URL or database ID here: ").strip()
+    if not raw_input:
         print("No database ID provided. Aborting.", file=sys.stderr)
         sys.exit(1)
+
+    database_id = _extract_database_id(raw_input)
+    if not database_id:
+        print(f"Could not extract a valid database ID from: {raw_input}", file=sys.stderr)
+        print("Expected: 32 hex characters (e.g. 264c3e246e0c44fb91987c8948bd0ec4)", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"  Extracted database ID: {database_id}")
 
     # Step 3: Share database
     print("\nStep 3: Share the database with your integration")
@@ -52,7 +98,8 @@ def main() -> None:
     # Verify connection
     try:
         db = client.databases.retrieve(database_id=database_id)
-        print(f"  Connected to database: {db.get('title', [{}])[0].get('plain_text', 'Untitled')}")
+        db_title = db.get('title', [{}])[0].get('plain_text', 'Untitled')
+        print(f"  Connected to database: {db_title}")
     except APIResponseError as e:
         if e.status == 401:
             print("  Error: Invalid API key.", file=sys.stderr)
@@ -65,7 +112,17 @@ def main() -> None:
             sys.exit(1)
 
     # Add required properties if missing
-    existing_props = db.get("properties", {})
+    data_sources = db.get("data_sources") or []
+    if data_sources:
+        schema_target = client.data_sources
+        schema_id = data_sources[0]["id"]
+        schema = client.data_sources.retrieve(data_source_id=schema_id)
+    else:
+        schema_target = client.databases
+        schema_id = database_id
+        schema = db
+
+    existing_props = schema.get("properties", {})
     needed = {
         "Priority": {"select": {"options": [
             {"name": "high", "color": "red"},
@@ -83,13 +140,21 @@ def main() -> None:
     for prop_name, prop_config in needed.items():
         if prop_name not in existing_props:
             try:
-                client.databases.update(
-                    database_id=database_id,
-                    properties={prop_name: prop_config},
-                )
+                if data_sources:
+                    schema_target.update(
+                        data_source_id=schema_id,
+                        properties={prop_name: prop_config},
+                    )
+                else:
+                    schema_target.update(
+                        database_id=schema_id,
+                        properties={prop_name: prop_config},
+                    )
                 print(f"  Added '{prop_name}' property")
             except APIResponseError as e:
-                print(f"  Warning: Could not add '{prop_name}': {e}")
+                print(f"  Error: Could not add '{prop_name}': {e}", file=sys.stderr)
+                print("  Check that this is a Notion database and that your integration has edit access.", file=sys.stderr)
+                sys.exit(1)
         else:
             print(f"  '{prop_name}' already exists")
 
