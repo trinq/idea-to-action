@@ -1,18 +1,31 @@
 """Tests for F016 - Gmail draft integration."""
 
+import importlib
 import os
 from unittest import mock
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def restore_config_from_real_environment():
+    yield
+
+    import idea_to_action.config as config
+
+    importlib.reload(config)
 
 
 def test_gmail_config_defaults_follow_project_conventions() -> None:
     with mock.patch.dict(os.environ, {}, clear=True):
-        import importlib
         import idea_to_action.config as config
 
         reloaded = importlib.reload(config)
 
         assert reloaded.GMAIL_CREDENTIALS_PATH.endswith("gmail_client_secret.json")
-        assert reloaded.GMAIL_TOKEN_PATH.endswith("data/gmail_token.json")
+        assert reloaded.GMAIL_TOKEN_PATH.endswith(
+            os.path.join("data", "gmail_token.json")
+        )
 
 
 def test_gmail_config_uses_i2a_env_vars() -> None:
@@ -24,7 +37,6 @@ def test_gmail_config_uses_i2a_env_vars() -> None:
         },
         clear=True,
     ):
-        import importlib
         import idea_to_action.config as config
 
         reloaded = importlib.reload(config)
