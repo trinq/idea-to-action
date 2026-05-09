@@ -146,6 +146,8 @@ class GmailDraftTool:
             "status": "created",
             "gmail_draft_id": created.get("id"),
             "gmail_message_id": created.get("message", {}).get("id"),
+            "email_subject": action.action_data.get("subject", ""),
+            "email_to": action.action_data.get("to"),
         }
 
         tracer = TraceLogger(f"gmail-draft-{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}")

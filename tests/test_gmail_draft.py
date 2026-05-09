@@ -288,6 +288,8 @@ class TestGmailExecuteWithMockedAPI:
             "status": "created",
             "gmail_draft_id": "draft-123",
             "gmail_message_id": "message-456",
+            "email_subject": "Hello",
+            "email_to": "person@example.com",
         }
 
     def test_execute_does_not_call_send_endpoint(self) -> None:
