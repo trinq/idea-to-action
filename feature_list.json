@@ -365,7 +365,7 @@
       "area": "integration",
       "title": "Gmail draft integration",
       "user_visible_behavior": "The system creates Gmail draft emails from approved draft email actions.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Authenticate with Gmail API via OAuth2.",
         "Create a draft email from an approved action (to, subject, body).",
@@ -373,8 +373,15 @@
         "Confirm draft appears in Gmail Drafts folder, not sent automatically.",
         "Handle API errors gracefully (auth expired, network, quota)."
       ],
-      "evidence": [],
-      "notes": "Creates drafts only, never sends automatically. Requires Google Cloud project with Gmail API. OAuth2 credentials via env/config. All writes approval-gated."
+      "evidence": [
+        "tests/test_gmail_draft.py passing",
+        "GmailDraftTool: OAuth2 compose scope, approval-gated execute()",
+        "ToolRegistry routes SEND_EMAIL to GmailDraftTool when configured, else FakeEmailTool",
+        "Draft creation uses users().drafts().create only; no send endpoint is called",
+        "UI shows Gmail connection status and draft IDs",
+        "scripts/auth_gmail.py for one-time OAuth2 browser flow"
+      ],
+      "notes": "Creates Gmail drafts only, never sends automatically. Requires Gmail API enabled and OAuth credentials via I2A_GMAIL_CREDENTIALS or gmail_client_secret.json. All writes approval-gated."
     }
   ]
 }
